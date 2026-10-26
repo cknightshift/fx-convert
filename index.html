@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FX Convert • Currency Convert</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; connect-src https://open.er-api.com https://frankfurter.app https://api.frankfurter.app; base-uri 'none'; form-action 'none'">
+<style>
+:root{
+  --bg:#081410;
+  --bg-deep:#060f0c;
+  --teal:#3ee6c8;
+  --plum:#b04e90;
+  --rose-light:#c9659f; /* lightest rose from Update Rates button gradient */
+  --gold:#d4b57a;
+  --ink:#eaf6f2;
+  --mut:#7fa89e;
+  --dim:#4f756c;
+  --card:#0c201a;
+  --card-edge:#1c3a32;
+  --live:#43d98a;
+  --bad:#ff5f66;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{min-height:100%}
+body{
+  font-family:"Avenir Next","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
+  color:var(--ink);
+  background:
+    radial-gradient(1100px 620px at 18% -12%, rgba(62,230,200,.10), transparent 60%),
+    radial-gradient(900px 520px at 88% 112%, rgba(176,78,144,.07), transparent 60%),
+    linear-gradient(180deg, var(--bg) 0%, var(--bg-deep) 55%, var(--bg) 100%);
+  min-height:100vh;
+  display:flex;flex-direction:column;
+  overflow-x:hidden;
+}
+/* static grain overlay */
+.grain{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:60;opacity:.055}
+
+/* ---------- header ---------- */
+header{
+  display:flex;align-items:center;gap:18px;
+  padding:13px clamp(16px,4vw,44px) 10px;
+}
+header .logo{flex:0 0 auto;display:block}
+.header-brand{
+  font-size:clamp(22px,3.4vw,32px);
+  font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--ink);
+}
+.header-brand .tick{color:var(--teal)}
+@media (max-width:640px){.header-brand{font-size:clamp(20px,3vw,26px)}}
+
+/* lens shimmer: a light band sweeps across both lenses on a loop */
+.logo .shine{
+  animation:shimmer 3.8s ease-in-out infinite;
+}
+@keyframes shimmer{
+  0%{transform:translateX(-34px);opacity:0}
+  12%{opacity:.9}
+  48%{transform:translateX(38px);opacity:.9}
+  60%,100%{transform:translateX(38px);opacity:0}
+}
+@media (prefers-reduced-motion:reduce){
+  .logo .shine{animation:none;opacity:.55;transform:translateX(4px)}
+}
+
+/* ---------- controls / status ---------- */
+.controls{
+  display:flex;align-items:center;gap:16px;flex-wrap:wrap;
+  padding:5px clamp(16px,4vw,44px) 9px;
+}
+.btn{
+  appearance:none;border:1px solid #5e1d47;
+  border-radius:10px;
+  color:var(--ink);font:inherit;font-size:14px;font-weight:600;letter-spacing:.05em;
+  padding:10px 22px;cursor:pointer;
+  background-color:#963a74;
+  background-image:
+    linear-gradient(165deg, #c9659f 0%, #b04e90 45%, #8a305f 100%);
+  box-shadow:0 0 0 1px rgba(192,101,159,.12), 0 8px 22px rgba(0,0,0,.35), inset 0 1px 0 rgba(232,196,106,.14);
+  transition:filter .15s ease;
+}
+.btn:hover:not(:disabled){filter:brightness(1.12)}
+.btn:disabled{cursor:default;color:var(--mut);filter:saturate(.5) brightness(.8)}
+.status{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:13.5px;color:var(--mut);min-height:1.2em;
+}
+.status.err{color:var(--bad)}
+
+/* ---------- carousel stage ---------- */
+.stage{
+  position:relative;flex:1 0 auto;
+  min-height:520px;
+  overflow:hidden;
+  margin:0 clamp(10px,3vw,34px) 4px;
+}
+.card{
+  position:absolute;top:50%;left:0;
+  width:min(340px,84vw);
+  transform:translate(-200px,-50%);
+  background:
+    linear-gradient(175deg, rgba(62,230,200,.05), transparent 40%),
+    var(--card);
+  border:1px solid var(--card-edge);
+  border-radius:16px;
+  padding:24px 24px 26px;
+  box-shadow:0 18px 50px rgba(0,0,0,.5), inset 0 1px 0 rgba(62,230,200,.08);
+  will-change:transform;
+  transition:none; /* armed after first paint so the load never slides */
+}
+.stage.armed .card{transition:transform .4s cubic-bezier(.2,.7,.3,1)}
+.stage.rm .card{transition:none !important}
+.stage:focus-visible{outline:1px solid var(--teal);outline-offset:-1px;border-radius:4px}
+.pair{display:flex;align-items:baseline;gap:10px;justify-content:center;flex-wrap:wrap}
+.pair .code{
+  font-size:24px;font-weight:700;letter-spacing:.06em;color:var(--teal);
+}
+.pair .name{font-size:12.5px;color:var(--mut);letter-spacing:.04em}
+.pair.to .code{color:var(--plum)}
+.swap{
+  display:block;margin:10px auto;
+  appearance:none;background:none;border:1px solid var(--card-edge);
+  border-radius:50%;width:44px;height:44px;
+  color:var(--teal);font-size:20px;line-height:1;cursor:pointer;
+  transition:color .15s ease,border-color .15s ease;
+}
+.swap:hover{color:var(--plum);border-color:var(--plum)}
+.io{margin-top:18px;border-top:1px solid var(--card-edge);padding-top:16px}
+.lbl{font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--dim);margin-bottom:6px}
+.inrow{display:flex;gap:8px}
+.amt{
+  flex:1;min-width:0;
+  background:rgba(6,15,12,.75);
+  border:1px solid var(--card-edge);border-radius:9px;
+  color:var(--ink);font:inherit;font-size:20px;
+  padding:10px 14px;outline:none;
+  transition:border-color .15s ease;
+}
+.amt:focus{border-color:var(--teal)}
+.amt::placeholder{color:#3a5c53}
+.calc-btn{
+  appearance:none;flex:0 0 auto;width:46px;
+  background:rgba(6,15,12,.6);border:1px solid var(--card-edge);border-radius:9px;
+  color:var(--mut);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:color .15s ease,border-color .15s ease;
+}
+.calc-btn:hover{color:var(--teal);border-color:var(--teal)}
+.calc-msg{
+  margin-top:6px;font-size:12.5px;color:var(--bad);letter-spacing:.02em;
+}
+.out{
+  margin-top:4px;font-size:30px;font-weight:600;color:var(--plum);
+  min-height:40px;word-break:break-all;line-height:1.25;
+}
+.out.na{font-size:14px;font-weight:400;color:var(--bad)}
+.pop-slot{position:relative;height:0}
+.calc-pop{
+  position:absolute;right:0;top:6px;z-index:40;
+  display:grid;grid-template-columns:repeat(3,52px);gap:6px;
+  background:#0e2620;border:1px solid var(--card-edge);border-radius:12px;
+  padding:10px;box-shadow:0 16px 40px rgba(0,0,0,.55);
+}
+/* the pad's own display rule would otherwise outrank the [hidden]
+   attribute's UA stylesheet, so a "closed" pad stayed visible
+   while detached from its card: buttons dead, nothing dismissible */
+.calc-pop[hidden]{display:none}
+.calc-pop button{
+  appearance:none;font:inherit;font-size:18px;
+  background:rgba(62,230,200,.07);border:1px solid var(--card-edge);border-radius:8px;
+  color:var(--ink);height:40px;cursor:pointer;
+  transition:background-color .15s ease;
+}
+.calc-pop button:hover{background:rgba(62,230,200,.18)}
+.calc-pop button.ok{color:var(--teal);font-weight:700}
+.calc-pop button.cls{color:var(--bad);font-weight:700}
+
+/* nav arrows */
+.nav{
+  position:absolute;top:50%;transform:translateY(-50%);z-index:30;
+  appearance:none;width:46px;height:46px;border-radius:50%;
+  background:rgba(12,32,25,.85);border:1px solid var(--card-edge);
+  color:var(--teal);cursor:pointer;display:flex;align-items:center;justify-content:center;
+  transition:color .15s ease,border-color .15s ease;
+}
+.nav:hover{color:var(--plum);border-color:var(--plum)}
+.nav.prev{left:6px}
+.nav.next{right:6px}
+@media (max-width:560px){.nav{width:38px;height:38px}.nav.prev{left:2px}.nav.next{right:2px}}
+
+/* ---------- footer ---------- */
+footer{
+  text-align:center;padding:13px 16px 30px;
+  border-top:1px solid rgba(28,58,50,.6);
+  margin-top:7px;
+}
+.gem{display:block;margin:0 auto 10px}
+.sig{
+  font-size:15.5px;font-style:normal;color:var(--mut);
+  letter-spacing:.01em;
+}
+.meta{
+  display:flex;align-items:center;justify-content:center;gap:14px;
+  margin-top:12px;font-size:12px;color:var(--dim);letter-spacing:.06em;
+}
+.dot{
+  width:9px;height:9px;border-radius:50%;display:inline-block;
+  background:#57756c;vertical-align:middle;flex:0 0 auto;
+}
+.dot.live{background:var(--live);box-shadow:0 0 6px rgba(67,217,138,.7)}
+.dot.bad{background:var(--bad);box-shadow:0 0 6px rgba(255,95,102,.7)}
+.dot.busy{background:#57756c}
+.ver{color:var(--rose-light);letter-spacing:.12em}
+
+/* gold spark orbits the heart's edge in sporadic arcs, twinkling as it goes */
+.orbiter{
+  transform-box:fill-box;transform-origin:center;
+  animation:orbit 9s cubic-bezier(.55,0,.35,1) infinite;
+}
+@keyframes orbit{
+  0%{transform:rotate(0deg)}
+  24%{transform:rotate(148deg)}
+  36%{transform:rotate(148deg)}   /* linger */
+  66%{transform:rotate(272deg)}
+  78%{transform:rotate(272deg)}   /* linger */
+  100%{transform:rotate(360deg)}
+}
+.spk{
+  opacity:0;
+  transform-box:fill-box;transform-origin:center;
+  animation:twinkle var(--td,4.6s) linear infinite;
+}
+@keyframes twinkle{
+  0%,54%{opacity:0;transform:scale(.25)}
+  63%{opacity:1;transform:scale(1.35)}
+  71%{opacity:.35;transform:scale(.9)}
+  80%{opacity:1;transform:scale(1.15)}
+  91%,100%{opacity:0;transform:scale(.25)}
+}
+@media (prefers-reduced-motion:reduce){
+  .orbiter,.spk{animation:none}
+  .spk{opacity:.45}
+}
+</style>
+</head>
+<body>
+
+<!-- static grain overlay -->
+<svg class="grain" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+  <filter id="grainF">
+    <feTurbulence type="fractalNoise" baseFrequency="0.82" numOctaves="2" stitchTiles="stitch"/>
+    <feColorMatrix type="saturate" values="0"/>
+  </filter>
+  <rect width="100%" height="100%" filter="url(#grainF)"/>
+</svg>
+
+<header>
+  <!-- cat logo: face only, static pose, friendly spunk; whisker-free -->
+  <svg class="logo" width="58" height="58" viewBox="0 0 64 64" aria-hidden="true">
+    <defs>
+      <linearGradient id="lensG" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#ffd0ea"/>
+        <stop offset=".55" stop-color="#eb98c9"/>
+        <stop offset="1" stop-color="#cf6da6"/>
+      </linearGradient>
+      <linearGradient id="shineBand" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0" stop-color="#ffffff" stop-opacity="0"/>
+        <stop offset=".5" stop-color="#ffffff" stop-opacity=".95"/>
+        <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+      </linearGradient>
+      <clipPath id="lensClip">
+        <polygon points="9,27 16,21 26,22 27,31 20,36 10,34"/>
+        <polygon points="55,27 48,21 38,22 37,31 44,36 54,34"/>
+      </clipPath>
+    </defs>
+    <!-- ears: teal outer, plum inner -->
+    <path d="M12 24 L10 6 L26 14 Z" fill="#2bb89c"/>
+    <path d="M52 24 L54 6 L38 14 Z" fill="#2bb89c"/>
+    <path d="M14.5 19.5 L13.5 10 L22.5 15 Z" fill="#b04e90"/>
+    <path d="M49.5 19.5 L50.5 10 L41.5 15 Z" fill="#b04e90"/>
+    <!-- head -->
+    <ellipse cx="32" cy="37" rx="22" ry="19" fill="#35c9ad"/>
+    <!-- expressive brows just above the frames -->
+    <path d="M14 17 Q20 13.5 25 15" fill="none" stroke="#1f9e86" stroke-width="2" stroke-linecap="round"/>
+    <path d="M39 15 Q44 13.5 50 17" fill="none" stroke="#1f9e86" stroke-width="2" stroke-linecap="round"/>
+    <!-- sunglasses: angular modern lenses, glimmery pink gradient -->
+    <polygon points="9,27 16,21 26,22 27,31 20,36 10,34" fill="url(#lensG)"/>
+    <polygon points="55,27 48,21 38,22 37,31 44,36 54,34" fill="url(#lensG)"/>
+    <!-- the slick bit: a light band sweeping across both lenses -->
+    <g clip-path="url(#lensClip)">
+      <g transform="rotate(12 32 28)">
+        <rect class="shine" x="18" y="12" width="9" height="34" fill="url(#shineBand)"/>
+      </g>
+    </g>
+    <!-- frames: plum outlines, bridge, and temple arms -->
+    <polygon points="9,27 16,21 26,22 27,31 20,36 10,34" fill="none" stroke="#b04e90" stroke-width="2.2" stroke-linejoin="round"/>
+    <polygon points="55,27 48,21 38,22 37,31 44,36 54,34" fill="none" stroke="#b04e90" stroke-width="2.2" stroke-linejoin="round"/>
+    <path d="M27 25 Q32 21.5 37 25" fill="none" stroke="#b04e90" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M10 26 L3 24.5" stroke="#b04e90" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M54 26 L61 24.5" stroke="#b04e90" stroke-width="2.2" stroke-linecap="round"/>
+    <!-- nose -->
+    <path d="M32 41.5 L29.2 39 L34.8 39 Z" fill="#b04e90"/>
+    <!-- the grin: open smile with a flat-toothed band (no fangs) -->
+    <path d="M21.5 45 Q32 57 42.5 45 Z" fill="#0a1a16"/>
+    <path d="M23 45.7 Q32 48.6 41 45.7 L40.6 47.4 Q32 50.3 23.4 47.4 Z" fill="#ffffff"/>
+    <path d="M27 46.4 L27.3 48.7 M32 47.1 L32 49.4 M37 46.4 L36.7 48.7" stroke="#7fa89e" stroke-width=".9" stroke-linecap="round"/>
+  </svg>
+  <h1 class="header-brand">FX<span class="tick">&middot;</span>CONVERT</h1>
+</header>
+
+<div class="controls">
+  <button id="updbtn" class="btn" type="button">Update Rates</button>
+  <div class="status" id="statusWrap" role="status">
+    <span class="dot busy" id="statusDot" aria-hidden="true"></span>
+    <span id="statusText">Waking up the rates desk&hellip;</span>
+  </div>
+</div>
+
+<main class="stage" id="stage" aria-label="Currency pair carousel" tabindex="0">
+  <button class="nav prev" id="prevBtn" type="button" aria-label="Previous pair">
+    <svg width="15" height="22" viewBox="0 0 15 22" fill="none" aria-hidden="true"><path d="M13 2 L3 11 L13 20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+  <!-- cards injected by script -->
+  <button class="nav next" id="nextBtn" type="button" aria-label="Next pair">
+    <svg width="15" height="22" viewBox="0 0 15 22" fill="none" aria-hidden="true"><path d="M2 2 L12 11 L2 20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
+</main>
+
+<footer>
+  <!-- sharply-cut matte heart with a gold spark orbiting its edge -->
+  <svg class="gem" width="56" height="52" viewBox="0 0 64 60" aria-hidden="true">
+    <defs>
+      <linearGradient id="gsh" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#fffbe0"/><stop offset="1" stop-color="#f8c64b"/>
+      </linearGradient>
+    </defs>
+    <!-- silhouette: deepest matte tone shows through as facet seams -->
+    <path d="M32 18 L18 4 L6 13 L3 26 L13 40 L32 57 L51 40 L61 26 L58 13 L46 4 Z" fill="#5e1d47"/>
+    <!-- facets: flat matte plums, tonal steps only, no gloss -->
+    <polygon points="32,18 18,4 6,13 20,28" fill="#a3417f"/>
+    <polygon points="32,18 46,4 58,13 44,28" fill="#963a74"/>
+    <polygon points="6,13 3,26 13,40 20,28" fill="#ab4684"/>
+    <polygon points="58,13 61,26 51,40 44,28" fill="#8e3368"/>
+    <polygon points="32,18 20,28 32,46 44,28" fill="#b04e90"/>
+    <polygon points="20,28 13,40 32,57 32,46" fill="#9c3d79"/>
+    <polygon points="44,28 51,40 32,57 32,46" fill="#8a305f"/>
+    <!-- hard-cut outline -->
+    <path d="M32 18 L18 4 L6 13 L3 26 L13 40 L32 57 L51 40 L61 26 L58 13 L46 4 Z" fill="none" stroke="#43142f" stroke-width="1.3" stroke-linejoin="miter"/>
+    <!-- orbiting gold sparks: pair sits diametrically opposite so the
+         group's own centre equals the heart's centre, then the whole
+         ring steps around in sporadic arcs while sparks twinkle -->
+    <g class="orbiter">
+      <polygon class="spk" style="--td:4.6s" points="32,0 34,2.8 32,5.6 30,2.8" fill="url(#gsh)"/>
+      <polygon class="spk" style="--td:3.7s;-webkit-animation-delay:.9s;animation-delay:.9s" points="32,54.4 34,57.2 32,60 30,57.2" fill="url(#gsh)"/>
+    </g>
+  </svg>
+  <p class="sig">Engineered with Proton's Clever Kitty (Lumo AI)</p>
+  <div class="meta">
+    <span class="ver">v10.13</span>
+  </div>
+</footer>
+
+<script>
+(function(){
+'use strict';
+
+/* ---------------- constants ---------------- */
+var NZD = 'NZD';
+var NZD_NAME = 'New Zealand Dollar';
+var PAIRS = [
+  ['USD','US Dollar'],
+  ['AUD','Australian Dollar'],
+  ['GBP','British Pound'],
+  ['EUR','Euro'],
+  ['ZAR','South African Rand']
+];
+var SETTLE_MS = 1200;
+var BOUND_LO = 0.02, BOUND_HI = 6.0;
+var PRIMARY_URL  = 'https://open.er-api.com/v6/latest/USD';
+var FALLBACK_URL = 'https://api.frankfurter.app/latest?from=EUR';
+var PRIMARY_MS = 12000, FALLBACK_MS = 8000;
+
+var stage      = document.getElementById('stage');
+var updBtn     = document.getElementById('updbtn');
+var statusWrap = document.getElementById('statusWrap');
+var statusText = document.getElementById('statusText');
+var statusDot  = document.getElementById('statusDot');
+
+var state = null;        /* { base, rates, label } or null */
+var busy = false;
+var index = 0;
+var cards = [];
+
+/* ---------------- status helpers ---------------- */
+function setStatus(text, dotClass){
+  statusText.textContent = text;
+  statusWrap.classList.toggle('err', dotClass === 'bad');
+  statusDot.className = 'dot ' + dotClass;
+}
+
+/* ---------------- safe expression parser ---------------- */
+var DIV0 = {div0:true};
+
+function tokenize(src){
+  var s = src.replace(/\u00d7/g,'*').replace(/[xX]/g,'*')
+             .replace(/\u00f7/g,'/').replace(/\u2212/g,'-');
+  var toks = [], i = 0;
+  while (i < s.length){
+    var ch = s[i];
+    if (ch === ' ' || ch === '\t'){ i++; continue; }
+    if (/[0-9.]/.test(ch)){
+      var j = i;
+      while (j < s.length && /[0-9.]/.test(s[j])) j++;
+      var ns = s.slice(i, j);
+      if ((ns.match(/\./g) || []).length > 1) throw new Error('malformed number "' + ns + '"');
+      var v = parseFloat(ns);
+      if (!isFinite(v)) throw new Error('malformed number "' + ns + '"');
+      toks.push({t:'num', v:v}); i = j; continue;
+    }
+    if (ch === '+' || ch === '-' || ch === '*' || ch === '/'){
+      toks.push({t:ch}); i++; continue;
+    }
+    throw new Error('unexpected character "' + ch + '"');
+  }
+  return toks;
+}
+
+function parseExpr(tk){
+  var v = parseTerm(tk);
+  while (tk.pos < tk.toks.length && (tk.toks[tk.pos].t === '+' || tk.toks[tk.pos].t === '-')){
+    var op = tk.toks[tk.pos].t; tk.pos++;
+    var r = parseTerm(tk);
+    if (op === '+') v += r; else v -= r;
+  }
+  return v;
+}
+function parseTerm(tk){
+  var v = parseFactor(tk);
+  while (tk.pos < tk.toks.length && (tk.toks[tk.pos].t === '*' || tk.toks[tk.pos].t === '/')){
+    var op = tk.toks[tk.pos].t; tk.pos++;
+    var r = parseFactor(tk);
+    if (op === '*') v *= r;
+    else { if (r === 0) throw DIV0; v /= r; }
+  }
+  return v;
+}
+function parseFactor(tk){
+  var tok = tk.toks[tk.pos];
+  if (!tok) throw new Error('incomplete');
+  if (tok.t === '-'){ tk.pos++; return -parseFactor(tk); }
+  if (tok.t === '+'){ tk.pos++; return parseFactor(tk); }
+  if (tok.t === 'num'){ tk.pos++; return tok.v; }
+  throw new Error('syntax');
+}
+
+/* evaluate -> {ok, value, complete, hasOp, div0} */
+function evaluate(src){
+  var out = {ok:false, value:NaN, complete:false, hasOp:false, div0:false};
+  var s = String(src == null ? '' : src).trim();
+  if (!s) return out;
+  var toks;
+  try { toks = tokenize(s); }
+  catch(e){ if (e && e.div0) out.div0 = true; return out; }
+  if (!toks.length) return out;
+  out.hasOp = toks.some(function(t){ return t.t !== 'num'; });
+  var ctx = {toks:toks, pos:0};
+  try {
+    var v = parseExpr(ctx);
+    if (ctx.pos !== toks.length) return out; /* trailing operator: incomplete */
+    if (!isFinite(v)) return out;
+    out.ok = true; out.value = v; out.complete = true;
+  } catch(e){
+    if (e && e.div0) out.div0 = true;
+  }
+  return out;
+}
+
+/* ---------------- formatting ---------------- */
+function fmtPlain(v){
+  var r = Math.round(v * 1e10) / 1e10;
+  return String(r);
+}
+function fmtMoney(v){
+  if (!isFinite(v)) return '';
+  var abs = Math.abs(v);
+  var opts = (abs !== 0 && abs < 1) ? {maximumFractionDigits:4} : {maximumFractionDigits:2};
+  return v.toLocaleString('en-NZ', opts);
+}
+function hhmm(d){
+  function p(n){ return (n < 10 ? '0' : '') + n; }
+  return p(d.getHours()) + ':' + p(d.getMinutes());
+}
+
+/* ---------------- card construction ---------------- */
+function buildCard(pair){
+  var other = pair[0], name = pair[1];
+  var el = document.createElement('article');
+  el.className = 'card';
+  el.innerHTML =
+    '<div class="pair from"><span class="code"></span><span class="name"></span></div>' +
+    '<button class="swap" type="button" aria-label="Reverse direction">\u21c4</button>' +
+    '<div class="pair to"><span class="code"></span><span class="name"></span></div>' +
+    '<div class="io">' +
+      '<div class="lbl lbl-in"></div>' +
+      '<div class="inrow">' +
+        '<input class="amt" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="0" aria-label="Amount">' +
+        '<button class="calc-btn" type="button" aria-label="Calculator">' +
+          '<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">' +
+            '<rect x="2" y="2" width="16" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/>' +
+            '<line x1="6" y1="6.5" x2="14" y2="6.5" stroke="currentColor" stroke-width="1.6"/>' +
+            '<circle cx="6.5" cy="11" r="1" fill="currentColor"/>' +
+            '<circle cx="10" cy="11" r="1" fill="currentColor"/>' +
+            '<circle cx="13.5" cy="11" r="1" fill="currentColor"/>' +
+            '<circle cx="6.5" cy="14.5" r="1" fill="currentColor"/>' +
+            '<circle cx="10" cy="14.5" r="1" fill="currentColor"/>' +
+            '<circle cx="13.5" cy="14.5" r="1" fill="currentColor"/>' +
+          '</svg>' +
+        '</button>' +
+      '</div>' +
+      '<div class="calc-msg" hidden></div>' +
+      '<div class="lbl lbl-out" style="margin-top:14px"></div>' +
+      '<div class="out" aria-live="polite"></div>' +
+    '</div>' +
+    '<div class="pop-slot"></div>';
+
+  var card = {
+    el: el,
+    other: other,
+    otherName: name,
+    dir: 'otherToNzd',     /* source currency is the non-NZD leg */
+    rate: null,            /* NZD per 1 unit of other currency */
+    timer: null,
+    fromCode: el.querySelector('.pair.from .code'),
+    fromName: el.querySelector('.pair.from .name'),
+    toCode:   el.querySelector('.pair.to .code'),
+    toName:   el.querySelector('.pair.to .name'),
+    lblIn:    el.querySelector('.lbl-in'),
+    lblOut:   el.querySelector('.lbl-out'),
+    amt:      el.querySelector('.amt'),
+    msg:      el.querySelector('.calc-msg'),
+    out:      el.querySelector('.out'),
+    calcBtn:  el.querySelector('.calc-btn'),
+    popSlot:  el.querySelector('.pop-slot')
+  };
+
+  el.querySelector('.swap').addEventListener('click', function(){
+    card.dir = (card.dir === 'otherToNzd') ? 'nzdToOther' : 'otherToNzd';
+    render(card);
+    updateOutput(card); /* typed value carries across */
+  });
+
+  card.amt.addEventListener('input', function(){ onAmountInput(card); });
+  card.amt.addEventListener('keydown', function(e){
+    if (e.key === 'Enter'){ e.preventDefault(); settleNow(card); }
+  });
+  card.amt.addEventListener('keyup', function(e){
+    /* arrows keep the caret while it can still move inside the text;
+       only once parked at an edge do they fall through to the
+       carousel's own keydown handler (events bubble to the stage) */
+    var len = card.amt.value.length;
+    if (e.key === 'ArrowLeft' && card.amt.selectionStart > 0) e.stopPropagation();
+    else if (e.key === 'ArrowRight' && card.amt.selectionStart < len) e.stopPropagation();
+  });
+
+  card.calcBtn.addEventListener('click', function(){ togglePop(card); });
+  /* mousedown.preventDefault keeps focus in the input (never steals focus) */
+  card.calcBtn.addEventListener('mousedown', function(e){ e.preventDefault(); });
+
+  return card;
+}
+
+/* draw direction: codes, names, labels */
+function render(card){
+  if (card.dir === 'otherToNzd'){
+    card.fromCode.textContent = card.other;  card.fromName.textContent = card.otherName;
+    card.toCode.textContent = NZD;           card.toName.textContent = NZD_NAME;
+    card.lblIn.textContent = 'Amount in ' + card.other;
+    card.lblOut.textContent = 'Converted to ' + NZD;
+    card.amt.setAttribute('aria-label', 'Amount in ' + card.other);
+  } else {
+    card.fromCode.textContent = NZD;         card.fromName.textContent = NZD_NAME;
+    card.toCode.textContent = card.other;    card.toName.textContent = card.otherName;
+    card.lblIn.textContent = 'Amount in ' + NZD;
+    card.lblOut.textContent = 'Converted to ' + card.other;
+    card.amt.setAttribute('aria-label', 'Amount in ' + NZD);
+  }
+}
+
+/* ---------------- conversion output ---------------- */
+function updateOutput(card){
+  var raw = card.amt.value;
+  var ev = evaluate(raw);
+  hideMsg(card);
+
+  if (!raw.trim()){ card.out.textContent = ''; card.out.classList.remove('na'); return; }
+
+  if (ev.div0){ showMsg(card, 'Cannot divide by zero'); card.out.textContent = ''; return; }
+  if (!(ev.ok && ev.complete)){ card.out.textContent = ''; return; } /* expression still cooking */
+
+  if (card.rate == null){
+    if (state == null){
+      card.out.textContent = ''; card.out.classList.remove('na'); /* no figures without live rates */
+    } else {
+      card.out.textContent = 'Rate unavailable';
+      card.out.classList.add('na');
+    }
+    return;
+  }
+  var conv = (card.dir === 'otherToNzd') ? ev.value * card.rate : ev.value / card.rate;
+  card.out.textContent = fmtMoney(conv);
+  card.out.classList.remove('na');
+}
+
+function showMsg(card, text){ card.msg.textContent = text; card.msg.hidden = false; }
+function hideMsg(card){ card.msg.hidden = true; card.msg.textContent = ''; }
+
+/* ---------------- auto-settle after typing an expression ---------------- */
+function onAmountInput(card){
+  if (card.timer){ clearTimeout(card.timer); card.timer = null; }
+  updateOutput(card);
+  var ev = evaluate(card.amt.value);
+  if (ev.ok && ev.complete && ev.hasOp){
+    card.timer = setTimeout(function(){ settleNow(card); }, SETTLE_MS);
+  }
+}
+
+function settleNow(card){
+  if (card.timer){ clearTimeout(card.timer); card.timer = null; }
+  var ev = evaluate(card.amt.value);
+  if (ev.ok && ev.complete && ev.hasOp){
+    card.amt.value = fmtPlain(ev.value);
+    card.amt.focus();
+    try { card.amt.setSelectionRange(card.amt.value.length, card.amt.value.length); } catch(err){}
+    updateOutput(card);
+  } else if (ev.div0){
+    showMsg(card, 'Cannot divide by zero');
+  }
+}
+
+/* ---------------- calculator popover ---------------- */
+var pop = document.createElement('div');
+pop.className = 'calc-pop';
+pop.hidden = true;
+var POP_KEYS = ['+','\u2212','\u00d7','\u00f7','C','\u2713'];
+POP_KEYS.forEach(function(k){
+  var b = document.createElement('button');
+  b.type = 'button';
+  b.textContent = k;
+  if (k === '\u2713'){ b.className = 'ok'; b.setAttribute('aria-label', 'Close calculator'); }
+  if (k === 'C'){ b.className = 'cls'; b.setAttribute('aria-label', 'Clear amount'); }
+  b.addEventListener('mousedown', function(e){ e.preventDefault(); }); /* focus stays in input */
+  b.addEventListener('click', function(){ onPopKey(k); });
+  pop.appendChild(b);
+});
+var openCard = null;
+
+function togglePop(card){
+  if (openCard === card && !pop.hidden){ closePop(); return; }
+  openCard = card;
+  card.popSlot.appendChild(pop);
+  pop.hidden = false;
+  card.amt.focus();
+}
+
+function closePop(){
+  pop.hidden = true;
+  openCard = null;
+}
+
+function onPopKey(k){
+  var card = openCard;
+  if (!card) return;
+  var inp = card.amt;
+  if (k === 'C'){
+    inp.value = '';
+    hideMsg(card);
+    onAmountInput(card);
+    inp.focus();
+    return;
+  }
+  if (k === '\u2713'){
+    /* close only: formulas settle by themselves (auto-calc + Enter) */
+    closePop();
+    inp.focus();
+    return;
+  }
+  /* operator insert at caret */
+  inp.focus();
+  var a = (typeof inp.selectionStart === 'number') ? inp.selectionStart : inp.value.length;
+  var b = (typeof inp.selectionEnd === 'number') ? inp.selectionEnd : a;
+  var sym = (k === '\u00d7') ? '\u00d7' : (k === '\u00f7') ? '\u00f7' : k;
+  inp.setRangeText(sym, a, b, 'end');
+  onAmountInput(card);
+}
+
+document.addEventListener('mousedown', function(e){
+  if (!pop.hidden && openCard){
+    if (!pop.contains(e.target) && !openCard.calcBtn.contains(e.target)) closePop();
+  }
+});
+document.addEventListener('keydown', function(e){
+  if (!pop.hidden && e.key === 'Escape'){ closePop(); }
+});
+
+/* ---------------- carousel ---------------- */
+function layout(){
+  var w = stage.clientWidth;
+  var cw = (cards.length ? cards[0].el.offsetWidth : 300);
+  var GAP = 26;
+  var slot = cw + GAP;
+  var n = cards.length;
+  cards.forEach(function(card, i){
+    var rel = ((i - index) % n + n) % n;
+    if (rel > n / 2) rel -= n;
+    card.el.style.transform = 'translate(' + (w / 2 + rel * slot - cw / 2) + 'px, -50%)';
+    card.el.style.zIndex = String(10 - Math.abs(rel));
+    card.el.style.opacity = (rel === 0) ? '1' : (Math.abs(rel) === 1 ? '.78' : '.45');
+  });
+}
+
+function go(step){
+  closePop(); /* the pad belongs to the card in focus; don't let it ride along */
+  var n = cards.length;
+  index = ((index + step) % n + n) % n;
+  layout();
+}
+
+document.getElementById('prevBtn').addEventListener('click', function(){ go(-1); });
+document.getElementById('nextBtn').addEventListener('click', function(){ go(1); });
+
+/* keyboard navigation on the focused stage; arrows pressed inside an
+   input are stopped upstream unless the caret is parked at an edge */
+stage.addEventListener('keydown', function(e){
+  if (e.defaultPrevented) return;
+  if (e.key === 'ArrowLeft'){ e.preventDefault(); go(-1); }
+  else if (e.key === 'ArrowRight'){ e.preventDefault(); go(1); }
+});
+
+var reducedMotion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+function applyRM(){
+  if (reducedMotion && reducedMotion.matches) stage.classList.add('rm');
+  else stage.classList.remove('rm');
+}
+if (reducedMotion && reducedMotion.addEventListener) reducedMotion.addEventListener('change', applyRM);
+
+var resizeTimer = null;
+window.addEventListener('resize', function(){
+  stage.classList.remove('armed'); /* no decorative slide while resizing */
+  layout();
+  if (resizeTimer) clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(function(){
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ stage.classList.add('armed'); }); });
+  }, 120);
+});
+
+/* ---------------- rates: fetch, fallback, bounds ---------------- */
+function fetchJSON(url, timeoutMs){
+  return new Promise(function(resolve, reject){
+    var settled = false;
+    var ctl = ('AbortController' in window) ? new AbortController() : null;
+    var timer = setTimeout(function(){
+      if (ctl) ctl.abort();
+      if (!settled){ settled = true; reject(new Error('timeout after ' + timeoutMs + 'ms')); }
+    }, timeoutMs);
+    var opts = ctl ? {signal: ctl.signal} : undefined;
+    fetch(url, opts).then(function(r){
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    }).then(function(j){
+      if (!settled){ settled = true; clearTimeout(timer); resolve(j); }
+    }).catch(function(err){
+      if (!settled){ settled = true; clearTimeout(timer); reject(err); }
+    });
+  });
+}
+
+function looksLikeErApi(j){ return j && j.result === 'success' && typeof j.base_code === 'string' && j.rates && typeof j.rates === 'object'; }
+function looksLikeFrank(j){ return j && typeof j.base === 'string' && j.rates && typeof j.rates === 'object'; }
+
+/* NZD per 1 unit of `other`, via quotient-of-per-base rates; null if unavailable */
+function computeRate(rates, base, other){
+  var n = rates[NZD];
+  var o = rates[other];
+  if (typeof n !== 'number' || typeof o !== 'number'){
+    console.warn('[FX Convert] ' + other + '/' + NZD + ': source ' + base + ' is missing a quote for the pair (NZD=' + n + ', ' + other + '=' + o + '); marking pair unavailable.');
+    return null;
+  }
+  var nzdPerOther = n / o;
+  if (!(nzdPerOther >= BOUND_LO && nzdPerOther <= BOUND_HI)){
+    console.warn('[FX Convert] ' + other + '/' + NZD + ' = ' + nzdPerOther.toFixed(6) + ' falls outside sanity bounds ' + BOUND_LO + '\u2013' + BOUND_HI + '; marking pair unavailable rather than substituting a value.');
+    return null;
+  }
+  return nzdPerOther;
+}
+
+function applyRates(rates, base, label, when){
+  state = {base: base, rates: rates, label: label};
+  cards.forEach(function(card){
+    card.rate = computeRate(rates, base, card.other);
+    updateOutput(card);
+  });
+  setStatus('Live rates via ' + label + ' \u00b7 ' + hhmm(when), 'live');
+}
+
+function failAll(reason){
+  state = null;
+  cards.forEach(function(card){
+    card.rate = null;
+    updateOutput(card); /* outputs clear; inputs stay editable */
+  });
+  setStatus('Rates unavailable \u2014 check your connection and tap Update Rates', 'bad');
+  console.warn('[FX Convert] Both rate sources failed. ' + reason);
+}
+
+function refreshRates(){
+  if (busy) return; /* no parallel-fetch races */
+  busy = true;
+  updBtn.disabled = true;
+  updBtn.textContent = 'Updating\u2026';
+  setStatus('Fetching live rates\u2026', 'busy');
+
+  fetchJSON(PRIMARY_URL, PRIMARY_MS).then(function(j){
+    if (!looksLikeErApi(j)) throw new Error('primary response malformed');
+    return {rates: j.rates, base: j.base_code, label: 'open.er-api.com'};
+  }).catch(function(err){
+    console.warn('[FX Convert] Primary source (open.er-api.com) failed: ' + err.message);
+    return fetchJSON(FALLBACK_URL, FALLBACK_MS).then(function(j2){
+      if (!looksLikeFrank(j2)) throw new Error('fallback response malformed');
+      return {rates: j2.rates, base: j2.base, label: 'frankfurter.app'};
+    });
+  }).then(function(win){
+    applyRates(win.rates, win.base, win.label, new Date());
+  }).catch(function(err){
+    failAll(err.message);
+  }).then(function(){
+    busy = false;
+    updBtn.disabled = false;
+    updBtn.textContent = 'Update Rates';
+  });
+}
+
+updBtn.addEventListener('click', refreshRates);
+
+/* ---------------- boot ---------------- */
+PAIRS.forEach(function(p){
+  var card = buildCard(p);
+  cards.push(card);
+  render(card);
+  stage.insertBefore(card.el, document.getElementById('nextBtn'));
+});
+
+applyRM();
+layout();
+/* arm transitions only after first paint, so opening the page never animates */
+requestAnimationFrame(function(){ requestAnimationFrame(function(){ stage.classList.add('armed'); }); });
+
+refreshRates();
+
+})();
+</script>
+</body>
+</html>
