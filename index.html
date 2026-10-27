@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FX Convert • Currency Convert</title>
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; img-src data:; connect-src https://open.er-api.com https://frankfurter.app https://api.frankfurter.app; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src https://open.er-api.com https://frankfurter.app https://api.frankfurter.app; base-uri 'none'; form-action 'none'">
 <style>
 :root{
   --bg:#081410;
@@ -51,7 +51,7 @@ header .logo{flex:0 0 auto;display:block}
 .header-brand .tick{color:var(--teal)}
 @media (max-width:640px){.header-brand{font-size:clamp(20px,3vw,26px)}}
 
-/* lens shimmer: a light band sweeps across both lenses on a loop */
+/* lens shimmer: a light band sweeps across the shield on a loop */
 .logo .shine{
   animation:shimmer 3.8s ease-in-out infinite;
 }
@@ -95,6 +95,18 @@ header .logo{flex:0 0 auto;display:block}
   min-height:520px;
   overflow:hidden;
   margin:0 clamp(10px,3vw,34px) 4px;
+}
+/* gem-cut beacon: pinned to the stage's top centre — the same axis
+   layout() centres the active card on — and pointing down at it.
+   pointer-events:none keeps it clear of every click beneath it */
+.beacon{
+  position:absolute;top:8px;left:50%;transform:translateX(-50%);
+  z-index:25;pointer-events:none;
+}
+.chevron{display:block;animation:bob 2.6s ease-in-out infinite}
+@keyframes bob{
+  0%,100%{transform:translateY(0)}
+  50%{transform:translateY(5px)}
 }
 .card{
   position:absolute;top:50%;left:0;
@@ -150,6 +162,9 @@ header .logo{flex:0 0 auto;display:block}
 .calc-msg{
   margin-top:6px;font-size:12.5px;color:var(--bad);letter-spacing:.02em;
 }
+/* quiet variant: for gentle guidance, not alarm — red stays
+   reserved for the C key and the bad status dot */
+.calc-msg.hint{color:var(--mut)}
 .out{
   margin-top:4px;font-size:30px;font-weight:600;color:var(--plum);
   min-height:40px;word-break:break-all;line-height:1.25;
@@ -241,6 +256,7 @@ footer{
 @media (prefers-reduced-motion:reduce){
   .orbiter,.spk{animation:none}
   .spk{opacity:.45}
+  .chevron{animation:none}
 }
 </style>
 </head>
@@ -270,8 +286,7 @@ footer{
         <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
       </linearGradient>
       <clipPath id="lensClip">
-        <polygon points="9,27 16,21 26,22 27,31 20,36 10,34"/>
-        <polygon points="55,27 48,21 38,22 37,31 44,36 54,34"/>
+        <path d="M7.5 26.5 L12.5 24 L51.5 24 L56.5 26.5 L56.5 32.5 L50.5 35.5 L13.5 35.5 L7.5 32.5 Z"/>
       </clipPath>
     </defs>
     <!-- ears: teal outer, plum inner -->
@@ -281,24 +296,23 @@ footer{
     <path d="M49.5 19.5 L50.5 10 L41.5 15 Z" fill="#b04e90"/>
     <!-- head -->
     <ellipse cx="32" cy="37" rx="22" ry="19" fill="#35c9ad"/>
-    <!-- expressive brows just above the frames -->
-    <path d="M14 17 Q20 13.5 25 15" fill="none" stroke="#1f9e86" stroke-width="2" stroke-linecap="round"/>
-    <path d="M39 15 Q44 13.5 50 17" fill="none" stroke="#1f9e86" stroke-width="2" stroke-linecap="round"/>
-    <!-- sunglasses: angular modern lenses, glimmery pink gradient -->
-    <polygon points="9,27 16,21 26,22 27,31 20,36 10,34" fill="url(#lensG)"/>
-    <polygon points="55,27 48,21 38,22 37,31 44,36 54,34" fill="url(#lensG)"/>
-    <!-- the slick bit: a light band sweeping across both lenses -->
+    <!-- expressive brows just above the shield frame -->
+    <path d="M15 20.5 Q20 17.5 24.5 19" fill="none" stroke="#1f9e86" stroke-width="2" stroke-linecap="round"/>
+    <path d="M39.5 19 Q44 17.5 49 20.5" fill="none" stroke="#1f9e86" stroke-width="2" stroke-linecap="round"/>
+    <!-- sunglasses: Oil Rig-style wraparound — one continuous rectangular
+         shield with chamfered corners, tapering outward past the temples;
+         no nose gap, fully opaque lens, nothing behind it -->
+    <path d="M7.5 26.5 L12.5 24 L51.5 24 L56.5 26.5 L56.5 32.5 L50.5 35.5 L13.5 35.5 L7.5 32.5 Z" fill="url(#lensG)"/>
+    <!-- the slick bit: a light band sweeping across the whole shield -->
     <g clip-path="url(#lensClip)">
       <g transform="rotate(12 32 28)">
-        <rect class="shine" x="18" y="12" width="9" height="34" fill="url(#shineBand)"/>
+        <rect class="shine" x="18" y="14" width="9" height="30" fill="url(#shineBand)"/>
       </g>
     </g>
-    <!-- frames: plum outlines, bridge, and temple arms -->
-    <polygon points="9,27 16,21 26,22 27,31 20,36 10,34" fill="none" stroke="#b04e90" stroke-width="2.2" stroke-linejoin="round"/>
-    <polygon points="55,27 48,21 38,22 37,31 44,36 54,34" fill="none" stroke="#b04e90" stroke-width="2.2" stroke-linejoin="round"/>
-    <path d="M27 25 Q32 21.5 37 25" fill="none" stroke="#b04e90" stroke-width="2.2" stroke-linecap="round"/>
-    <path d="M10 26 L3 24.5" stroke="#b04e90" stroke-width="2.2" stroke-linecap="round"/>
-    <path d="M54 26 L61 24.5" stroke="#b04e90" stroke-width="2.2" stroke-linecap="round"/>
+    <!-- frame: single plum outline around the shield, temple arms sweeping back -->
+    <path d="M7.5 26.5 L12.5 24 L51.5 24 L56.5 26.5 L56.5 32.5 L50.5 35.5 L13.5 35.5 L7.5 32.5 Z" fill="none" stroke="#b04e90" stroke-width="2.4" stroke-linejoin="round"/>
+    <path d="M8 29 L2.5 27" stroke="#b04e90" stroke-width="2.2" stroke-linecap="round"/>
+    <path d="M56 29 L61.5 27" stroke="#b04e90" stroke-width="2.2" stroke-linecap="round"/>
     <!-- nose -->
     <path d="M32 41.5 L29.2 39 L34.8 39 Z" fill="#b04e90"/>
     <!-- the grin: open smile with a flat-toothed band (no fangs) -->
@@ -318,6 +332,29 @@ footer{
 </div>
 
 <main class="stage" id="stage" aria-label="Currency pair carousel" tabindex="0">
+  <!-- gem-cut beacon: same matte facet language as the footer heart,
+       bobbing gently above whichever card layout() has centred -->
+  <div class="beacon" aria-hidden="true">
+    <svg class="chevron" width="44" height="42" viewBox="0 0 40 38">
+      <defs>
+        <linearGradient id="gshC" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#fffbe0"/><stop offset="1" stop-color="#f8c64b"/>
+        </linearGradient>
+      </defs>
+      <!-- silhouette: deepest matte tone shows through as facet seams -->
+      <path d="M4 4 L36 4 L36 12 L20 30 L4 12 Z" fill="#5e1d47"/>
+      <!-- facets: flat matte plums, tonal steps only, no gloss -->
+      <polygon points="4,4 36,4 36,8 4,8" fill="#b04e90"/>
+      <polygon points="4,8 20,8 20,30 4,12" fill="#a3417f"/>
+      <polygon points="20,8 36,8 36,12 20,30" fill="#8e3368"/>
+      <!-- bevelled keel ridge running down to the point -->
+      <polygon points="17,9 23,9 20,24" fill="#963a74"/>
+      <!-- hard-cut outline -->
+      <path d="M4 4 L36 4 L36 12 L20 30 L4 12 Z" fill="none" stroke="#43142f" stroke-width="1.3" stroke-linejoin="miter"/>
+      <!-- gold spark twinkling just past the point, on the heart's clock -->
+      <polygon class="spk" style="--td:3.9s" points="20,31.8 22.1,34.1 20,36.4 17.9,34.1" fill="url(#gshC)"/>
+    </svg>
+  </div>
   <button class="nav prev" id="prevBtn" type="button" aria-label="Previous pair">
     <svg width="15" height="22" viewBox="0 0 15 22" fill="none" aria-hidden="true"><path d="M13 2 L3 11 L13 20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </button>
@@ -357,7 +394,7 @@ footer{
   </svg>
   <p class="sig">Engineered with Proton's Clever Kitty (Lumo AI)</p>
   <div class="meta">
-    <span class="ver">v10.13</span>
+    <span class="ver">v10.20</span>
   </div>
 </footer>
 
@@ -365,32 +402,57 @@ footer{
 (function(){
 'use strict';
 
+/* ===== v10.20 — gem-cut beacon marks the active card =============
+   - Decorative chevron pinned to the stage's top centre, cut from
+     the footer heart's own recipe: deepest-tone silhouette behind
+     tonal-step matte facets, hard-cut outline, miter joins — plus a
+     bevelled keel ridge running down to the point. A gold spark
+     twinkles at its tip on the same .spk clock the heart's
+     orbiters keep, and the whole marker bobs gently, holding still
+     under prefers-reduced-motion like every other moving part.
+   - Layering: z-index 25 sits above the cards (whose stacking tops
+     out near 10) but below the nav arrows (30) and keypad (40); the
+     beacon is pointer-events:none and aria-hidden, so it points at
+     the centred card without taking a click or a screen-reader
+     announcement away from it.
+   ================================================================ */
+
+/* ===== v10.18 — honest small-change formatting ==================
+   - fmtMoney() now scales fraction digits with magnitude (2, 4 or
+     6 places) instead of the old flat 2-or-4 split, and falls back
+     to significant-digit formatting whenever fixed-point rounding
+     would still render a nonzero result as "0". Small outputs are
+     at worst imprecise, never wrong; ordinary amounts (>= 1) are
+     formatted exactly as before.
+   ================================================================ */
+
 /* ---------------- constants ---------------- */
-var NZD = 'NZD';
-var NZD_NAME = 'New Zealand Dollar';
-var PAIRS = [
+const NZD = 'NZD';
+const NZD_NAME = 'New Zealand Dollar';
+const PAIRS = [
   ['USD','US Dollar'],
   ['AUD','Australian Dollar'],
   ['GBP','British Pound'],
   ['EUR','Euro'],
   ['ZAR','South African Rand']
 ];
-var SETTLE_MS = 1200;
-var BOUND_LO = 0.02, BOUND_HI = 6.0;
-var PRIMARY_URL  = 'https://open.er-api.com/v6/latest/USD';
-var FALLBACK_URL = 'https://api.frankfurter.app/latest?from=EUR';
-var PRIMARY_MS = 12000, FALLBACK_MS = 8000;
+const SETTLE_MS = 1200;
+const BOUND_LO = 0.02, BOUND_HI = 6.0;
+const PRIMARY_URL  = 'https://open.er-api.com/v6/latest/USD';
+const FALLBACK_URL = 'https://api.frankfurter.app/latest?from=EUR';
+const PRIMARY_MS = 12000, FALLBACK_MS = 8000;
+const NUM = /[0-9.]/;
 
-var stage      = document.getElementById('stage');
-var updBtn     = document.getElementById('updbtn');
-var statusWrap = document.getElementById('statusWrap');
-var statusText = document.getElementById('statusText');
-var statusDot  = document.getElementById('statusDot');
+const stage      = document.getElementById('stage');
+const updBtn     = document.getElementById('updbtn');
+const statusWrap = document.getElementById('statusWrap');
+const statusText = document.getElementById('statusText');
+const statusDot  = document.getElementById('statusDot');
 
-var state = null;        /* { base, rates, label } or null */
-var busy = false;
-var index = 0;
-var cards = [];
+let state = null;        /* { base, rates, label } or null */
+let busy = false;
+let index = 0;
+const cards = [];
 
 /* ---------------- status helpers ---------------- */
 function setStatus(text, dotClass){
@@ -400,23 +462,25 @@ function setStatus(text, dotClass){
 }
 
 /* ---------------- safe expression parser ---------------- */
-var DIV0 = {div0:true};
+const DIV0 = {div0:true};
 
 function tokenize(src){
-  var s = src.replace(/\u00d7/g,'*').replace(/[xX]/g,'*')
-             .replace(/\u00f7/g,'/').replace(/\u2212/g,'-');
-  var toks = [], i = 0;
+  const s = String(src)
+    .replace(/\u00d7/g,'*').replace(/[xX]/g,'*')
+    .replace(/\u00f7/g,'/').replace(/\u2212/g,'-');
+  const toks = [];
+  let i = 0;
   while (i < s.length){
-    var ch = s[i];
+    const ch = s[i];
     if (ch === ' ' || ch === '\t'){ i++; continue; }
-    if (/[0-9.]/.test(ch)){
-      var j = i;
-      while (j < s.length && /[0-9.]/.test(s[j])) j++;
-      var ns = s.slice(i, j);
+    if (NUM.test(ch)){
+      let j = i;
+      while (j < s.length && NUM.test(s[j])) j++;
+      const ns = s.slice(i, j);
       if ((ns.match(/\./g) || []).length > 1) throw new Error('malformed number "' + ns + '"');
-      var v = parseFloat(ns);
+      const v = parseFloat(ns);
       if (!isFinite(v)) throw new Error('malformed number "' + ns + '"');
-      toks.push({t:'num', v:v}); i = j; continue;
+      toks.push({t:'num', v}); i = j; continue;
     }
     if (ch === '+' || ch === '-' || ch === '*' || ch === '/'){
       toks.push({t:ch}); i++; continue;
@@ -427,26 +491,26 @@ function tokenize(src){
 }
 
 function parseExpr(tk){
-  var v = parseTerm(tk);
+  let v = parseTerm(tk);
   while (tk.pos < tk.toks.length && (tk.toks[tk.pos].t === '+' || tk.toks[tk.pos].t === '-')){
-    var op = tk.toks[tk.pos].t; tk.pos++;
-    var r = parseTerm(tk);
+    const op = tk.toks[tk.pos].t; tk.pos++;
+    const r = parseTerm(tk);
     if (op === '+') v += r; else v -= r;
   }
   return v;
 }
 function parseTerm(tk){
-  var v = parseFactor(tk);
+  let v = parseFactor(tk);
   while (tk.pos < tk.toks.length && (tk.toks[tk.pos].t === '*' || tk.toks[tk.pos].t === '/')){
-    var op = tk.toks[tk.pos].t; tk.pos++;
-    var r = parseFactor(tk);
+    const op = tk.toks[tk.pos].t; tk.pos++;
+    const r = parseFactor(tk);
     if (op === '*') v *= r;
     else { if (r === 0) throw DIV0; v /= r; }
   }
   return v;
 }
 function parseFactor(tk){
-  var tok = tk.toks[tk.pos];
+  const tok = tk.toks[tk.pos];
   if (!tok) throw new Error('incomplete');
   if (tok.t === '-'){ tk.pos++; return -parseFactor(tk); }
   if (tok.t === '+'){ tk.pos++; return parseFactor(tk); }
@@ -454,19 +518,23 @@ function parseFactor(tk){
   throw new Error('syntax');
 }
 
-/* evaluate -> {ok, value, complete, hasOp, div0} */
+/* evaluate -> {ok, value, complete, hasOp, div0, bad}
+   bad = tokenizer rejection (invalid character / malformed number):
+   grounds for a gentle hint, unlike a still-cooking expression */
 function evaluate(src){
-  var out = {ok:false, value:NaN, complete:false, hasOp:false, div0:false};
-  var s = String(src == null ? '' : src).trim();
+  const out = {ok:false, value:NaN, complete:false, hasOp:false, div0:false, bad:false};
+  const s = String(src == null ? '' : src).trim();
   if (!s) return out;
-  var toks;
+  let toks;
   try { toks = tokenize(s); }
-  catch(e){ if (e && e.div0) out.div0 = true; return out; }
+  catch(e){ out.bad = true; return out; }
   if (!toks.length) return out;
-  out.hasOp = toks.some(function(t){ return t.t !== 'num'; });
-  var ctx = {toks:toks, pos:0};
+  /* an operator beyond the lead position makes it a formula; a lone
+     unary sign (as in "-5") is just a number and must not auto-settle */
+  out.hasOp = toks.some((t, idx) => t.t !== 'num' && idx > 0);
+  const ctx = {toks, pos:0};
   try {
-    var v = parseExpr(ctx);
+    const v = parseExpr(ctx);
     if (ctx.pos !== toks.length) return out; /* trailing operator: incomplete */
     if (!isFinite(v)) return out;
     out.ok = true; out.value = v; out.complete = true;
@@ -478,24 +546,51 @@ function evaluate(src){
 
 /* ---------------- formatting ---------------- */
 function fmtPlain(v){
-  var r = Math.round(v * 1e10) / 1e10;
+  const r = Math.round(v * 1e10) / 1e10;
+  /* values beyond ~1e298 overflow the multiply; v itself is finite,
+     so fall back to its honest exponent form */
+  if (!isFinite(r)) return String(v);
   return String(r);
 }
 function fmtMoney(v){
   if (!isFinite(v)) return '';
-  var abs = Math.abs(v);
-  var opts = (abs !== 0 && abs < 1) ? {maximumFractionDigits:4} : {maximumFractionDigits:2};
-  return v.toLocaleString('en-NZ', opts);
+  if (v === 0) return v.toLocaleString('en-NZ', {maximumFractionDigits: 2});
+  /* fraction digits scale down with magnitude: two places from a
+     dollar down, four from a cent down, six below that. Maximum
+     (not minimum) counts keep tidy results uncluttered. */
+  const abs = Math.abs(v);
+  const digs = (abs >= 1) ? 2 : (abs >= 0.01 ? 4 : 6);
+  let s = v.toLocaleString('en-NZ', {maximumFractionDigits: digs});
+  /* honesty guard: if fixed-point rounding still swallowed the
+     figure entirely (a nonzero result displaying as "0"), retreat
+     to significant digits so something truthful survives — the
+     same principle as "Rate unavailable": never show a false zero */
+  if (parseFloat(s.replace(/[^0-9.\-]/g, '')) === 0){
+    s = v.toLocaleString('en-NZ', {maximumSignificantDigits: 3});
+  }
+  return s;
 }
 function hhmm(d){
-  function p(n){ return (n < 10 ? '0' : '') + n; }
+  const p = n => (n < 10 ? '0' : '') + n;
   return p(d.getHours()) + ':' + p(d.getMinutes());
 }
 
 /* ---------------- card construction ---------------- */
+const CARD_SVG_CALC =
+  '<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">' +
+    '<rect x="2" y="2" width="16" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/>' +
+    '<line x1="6" y1="6.5" x2="14" y2="6.5" stroke="currentColor" stroke-width="1.6"/>' +
+    '<circle cx="6.5" cy="11" r="1" fill="currentColor"/>' +
+    '<circle cx="10" cy="11" r="1" fill="currentColor"/>' +
+    '<circle cx="13.5" cy="11" r="1" fill="currentColor"/>' +
+    '<circle cx="6.5" cy="14.5" r="1" fill="currentColor"/>' +
+    '<circle cx="10" cy="14.5" r="1" fill="currentColor"/>' +
+    '<circle cx="13.5" cy="14.5" r="1" fill="currentColor"/>' +
+  '</svg>';
+
 function buildCard(pair){
-  var other = pair[0], name = pair[1];
-  var el = document.createElement('article');
+  const other = pair[0], name = pair[1];
+  const el = document.createElement('article');
   el.className = 'card';
   el.innerHTML =
     '<div class="pair from"><span class="code"></span><span class="name"></span></div>' +
@@ -505,18 +600,7 @@ function buildCard(pair){
       '<div class="lbl lbl-in"></div>' +
       '<div class="inrow">' +
         '<input class="amt" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="0" aria-label="Amount">' +
-        '<button class="calc-btn" type="button" aria-label="Calculator">' +
-          '<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">' +
-            '<rect x="2" y="2" width="16" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/>' +
-            '<line x1="6" y1="6.5" x2="14" y2="6.5" stroke="currentColor" stroke-width="1.6"/>' +
-            '<circle cx="6.5" cy="11" r="1" fill="currentColor"/>' +
-            '<circle cx="10" cy="11" r="1" fill="currentColor"/>' +
-            '<circle cx="13.5" cy="11" r="1" fill="currentColor"/>' +
-            '<circle cx="6.5" cy="14.5" r="1" fill="currentColor"/>' +
-            '<circle cx="10" cy="14.5" r="1" fill="currentColor"/>' +
-            '<circle cx="13.5" cy="14.5" r="1" fill="currentColor"/>' +
-          '</svg>' +
-        '</button>' +
+        '<button class="calc-btn" type="button" aria-label="Calculator">' + CARD_SVG_CALC + '</button>' +
       '</div>' +
       '<div class="calc-msg" hidden></div>' +
       '<div class="lbl lbl-out" style="margin-top:14px"></div>' +
@@ -524,10 +608,8 @@ function buildCard(pair){
     '</div>' +
     '<div class="pop-slot"></div>';
 
-  var card = {
-    el: el,
-    other: other,
-    otherName: name,
+  const card = {
+    el, other, otherName: name,
     dir: 'otherToNzd',     /* source currency is the non-NZD leg */
     rate: null,            /* NZD per 1 unit of other currency */
     timer: null,
@@ -544,33 +626,38 @@ function buildCard(pair){
     popSlot:  el.querySelector('.pop-slot')
   };
 
-  el.querySelector('.swap').addEventListener('click', function(){
+  el.querySelector('.swap').addEventListener('click', () => {
+    closePop(); /* the pad closes on swap, per spec */
     card.dir = (card.dir === 'otherToNzd') ? 'nzdToOther' : 'otherToNzd';
     render(card);
     updateOutput(card); /* typed value carries across */
   });
 
-  card.amt.addEventListener('input', function(){ onAmountInput(card); });
-  card.amt.addEventListener('keydown', function(e){
-    if (e.key === 'Enter'){ e.preventDefault(); settleNow(card); }
-  });
-  card.amt.addEventListener('keyup', function(e){
+  card.amt.addEventListener('input', () => { onAmountInput(card); });
+  card.amt.addEventListener('keydown', e => {
+    if (e.key === 'Enter'){ e.preventDefault(); settleNow(card); return; }
     /* arrows keep the caret while it can still move inside the text;
-       only once parked at an edge do they fall through to the
-       carousel's own keydown handler (events bubble to the stage) */
-    var len = card.amt.value.length;
-    if (e.key === 'ArrowLeft' && card.amt.selectionStart > 0) e.stopPropagation();
-    else if (e.key === 'ArrowRight' && card.amt.selectionStart < len) e.stopPropagation();
+       once parked at an edge they bubble up to the stage's keydown
+       and drive the carousel. The edge test must live on keydown
+       itself: the carousel listens on keydown, so stopping a later
+       keyup (as v10.14 did) still let every arrow both move the
+       caret and slide the stage. */
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight'){
+      const len = card.amt.value.length;
+      const pos = card.amt.selectionStart;
+      if ((e.key === 'ArrowLeft' && pos > 0) ||
+          (e.key === 'ArrowRight' && pos < len)) e.stopPropagation();
+    }
   });
 
-  card.calcBtn.addEventListener('click', function(){ togglePop(card); });
+  card.calcBtn.addEventListener('click', () => { togglePop(card); });
   /* mousedown.preventDefault keeps focus in the input (never steals focus) */
-  card.calcBtn.addEventListener('mousedown', function(e){ e.preventDefault(); });
+  card.calcBtn.addEventListener('mousedown', e => { e.preventDefault(); });
 
   return card;
 }
 
-/* draw direction: codes, names, labels */
+/* draw direction: codes, names, labels, accessible name */
 function render(card){
   if (card.dir === 'otherToNzd'){
     card.fromCode.textContent = card.other;  card.fromName.textContent = card.otherName;
@@ -578,60 +665,79 @@ function render(card){
     card.lblIn.textContent = 'Amount in ' + card.other;
     card.lblOut.textContent = 'Converted to ' + NZD;
     card.amt.setAttribute('aria-label', 'Amount in ' + card.other);
+    card.el.setAttribute('aria-label', card.other + ' to New Zealand Dollar');
   } else {
     card.fromCode.textContent = NZD;         card.fromName.textContent = NZD_NAME;
     card.toCode.textContent = card.other;    card.toName.textContent = card.otherName;
     card.lblIn.textContent = 'Amount in ' + NZD;
     card.lblOut.textContent = 'Converted to ' + card.other;
     card.amt.setAttribute('aria-label', 'Amount in ' + NZD);
+    card.el.setAttribute('aria-label', 'New Zealand Dollar to ' + card.other);
   }
 }
 
 /* ---------------- conversion output ---------------- */
+function clearOut(card){
+  card.out.textContent = '';
+  card.out.classList.remove('na');
+}
+/* returns the evaluation result so callers never re-parse the same text */
 function updateOutput(card){
-  var raw = card.amt.value;
-  var ev = evaluate(raw);
+  const raw = card.amt.value;
+  const ev = evaluate(raw);
   hideMsg(card);
 
-  if (!raw.trim()){ card.out.textContent = ''; card.out.classList.remove('na'); return; }
+  if (!raw.trim()){ clearOut(card); return ev; }
 
-  if (ev.div0){ showMsg(card, 'Cannot divide by zero'); card.out.textContent = ''; return; }
-  if (!(ev.ok && ev.complete)){ card.out.textContent = ''; return; } /* expression still cooking */
+  if (ev.div0){ showMsg(card, 'Cannot divide by zero'); clearOut(card); return ev; }
+  /* quiet guidance for invalid characters: muted tone, never alarm red */
+  if (ev.bad){ showMsg(card, 'Numbers and + \u2212 \u00d7 \u00f7 only', 'hint'); clearOut(card); return ev; }
+  if (!(ev.ok && ev.complete)){ clearOut(card); return ev; } /* expression still cooking */
 
   if (card.rate == null){
     if (state == null){
-      card.out.textContent = ''; card.out.classList.remove('na'); /* no figures without live rates */
+      clearOut(card); /* no figures without live rates */
     } else {
       card.out.textContent = 'Rate unavailable';
       card.out.classList.add('na');
     }
-    return;
+    return ev;
   }
-  var conv = (card.dir === 'otherToNzd') ? ev.value * card.rate : ev.value / card.rate;
+  const conv = (card.dir === 'otherToNzd') ? ev.value * card.rate : ev.value / card.rate;
   card.out.textContent = fmtMoney(conv);
   card.out.classList.remove('na');
+  return ev;
 }
 
-function showMsg(card, text){ card.msg.textContent = text; card.msg.hidden = false; }
+function showMsg(card, text, kind){
+  card.msg.textContent = text;
+  card.msg.className = 'calc-msg' + (kind ? ' ' + kind : '');
+  card.msg.hidden = false;
+}
 function hideMsg(card){ card.msg.hidden = true; card.msg.textContent = ''; }
 
 /* ---------------- auto-settle after typing an expression ---------------- */
 function onAmountInput(card){
   if (card.timer){ clearTimeout(card.timer); card.timer = null; }
-  updateOutput(card);
-  var ev = evaluate(card.amt.value);
+  const ev = updateOutput(card); /* one parse feeds both output and settle logic */
   if (ev.ok && ev.complete && ev.hasOp){
-    card.timer = setTimeout(function(){ settleNow(card); }, SETTLE_MS);
+    /* hand the settled parse through, so the timer never re-tokenises */
+    card.timer = setTimeout(() => settleNow(card, ev), SETTLE_MS);
   }
 }
 
-function settleNow(card){
+function settleNow(card, ev){
   if (card.timer){ clearTimeout(card.timer); card.timer = null; }
-  var ev = evaluate(card.amt.value);
+  if (!ev) ev = evaluate(card.amt.value); /* Enter path: parse fresh */
   if (ev.ok && ev.complete && ev.hasOp){
     card.amt.value = fmtPlain(ev.value);
-    card.amt.focus();
-    try { card.amt.setSelectionRange(card.amt.value.length, card.amt.value.length); } catch(err){}
+    /* the value settles wherever it lives, but focus only follows
+       the centred card: a settle timer surviving carousel travel
+       used to yank focus back to a dimmed, off-stage card */
+    if (cards[index] === card){
+      card.amt.focus();
+      try { card.amt.setSelectionRange(card.amt.value.length, card.amt.value.length); } catch(err){}
+    }
     updateOutput(card);
   } else if (ev.div0){
     showMsg(card, 'Cannot divide by zero');
@@ -639,21 +745,29 @@ function settleNow(card){
 }
 
 /* ---------------- calculator popover ---------------- */
-var pop = document.createElement('div');
+const pop = document.createElement('div');
 pop.className = 'calc-pop';
 pop.hidden = true;
-var POP_KEYS = ['+','\u2212','\u00d7','\u00f7','C','\u2713'];
-POP_KEYS.forEach(function(k){
-  var b = document.createElement('button');
+const POP_KEYS = ['+','\u2212','\u00d7','\u00f7','C','\u2713'];
+POP_KEYS.forEach(k => {
+  const b = document.createElement('button');
   b.type = 'button';
   b.textContent = k;
+  b.dataset.k = k; /* delegated handlers below read this */
   if (k === '\u2713'){ b.className = 'ok'; b.setAttribute('aria-label', 'Close calculator'); }
   if (k === 'C'){ b.className = 'cls'; b.setAttribute('aria-label', 'Clear amount'); }
-  b.addEventListener('mousedown', function(e){ e.preventDefault(); }); /* focus stays in input */
-  b.addEventListener('click', function(){ onPopKey(k); });
   pop.appendChild(b);
 });
-var openCard = null;
+let openCard = null;
+
+/* two delegated listeners replace a dozen per-key attachments */
+pop.addEventListener('mousedown', e => {
+  if (e.target.closest('button')) e.preventDefault(); /* focus stays in input */
+});
+pop.addEventListener('click', e => {
+  const b = e.target.closest('button');
+  if (b) onPopKey(b.dataset.k);
+});
 
 function togglePop(card){
   if (openCard === card && !pop.hidden){ closePop(); return; }
@@ -669,9 +783,9 @@ function closePop(){
 }
 
 function onPopKey(k){
-  var card = openCard;
+  const card = openCard;
   if (!card) return;
-  var inp = card.amt;
+  const inp = card.amt;
   if (k === 'C'){
     inp.value = '';
     hideMsg(card);
@@ -685,93 +799,109 @@ function onPopKey(k){
     inp.focus();
     return;
   }
-  /* operator insert at caret */
+  /* operator insert at caret; the key glyph is already the display form */
   inp.focus();
-  var a = (typeof inp.selectionStart === 'number') ? inp.selectionStart : inp.value.length;
-  var b = (typeof inp.selectionEnd === 'number') ? inp.selectionEnd : a;
-  var sym = (k === '\u00d7') ? '\u00d7' : (k === '\u00f7') ? '\u00f7' : k;
-  inp.setRangeText(sym, a, b, 'end');
+  const a = (typeof inp.selectionStart === 'number') ? inp.selectionStart : inp.value.length;
+  const b = (typeof inp.selectionEnd === 'number') ? inp.selectionEnd : a;
+  inp.setRangeText(k, a, b, 'end');
   onAmountInput(card);
 }
 
-document.addEventListener('mousedown', function(e){
+document.addEventListener('mousedown', e => {
   if (!pop.hidden && openCard){
     if (!pop.contains(e.target) && !openCard.calcBtn.contains(e.target)) closePop();
   }
 });
-document.addEventListener('keydown', function(e){
+document.addEventListener('keydown', e => {
   if (!pop.hidden && e.key === 'Escape'){ closePop(); }
 });
 
 /* ---------------- carousel ---------------- */
+/* card width changes only with the viewport (min(340px,84vw)), so it is
+   measured once at boot and again on resize; layout() used to force a
+   reflow reading offsetWidth on every carousel step */
+let cardW = 300;
+function measure(){ cardW = cards.length ? cards[0].el.offsetWidth : 300; }
+
 function layout(){
-  var w = stage.clientWidth;
-  var cw = (cards.length ? cards[0].el.offsetWidth : 300);
-  var GAP = 26;
-  var slot = cw + GAP;
-  var n = cards.length;
-  cards.forEach(function(card, i){
-    var rel = ((i - index) % n + n) % n;
+  const w = stage.clientWidth;
+  const GAP = 26;
+  const slot = cardW + GAP;
+  const n = cards.length;
+  cards.forEach((card, i) => {
+    let rel = ((i - index) % n + n) % n;
     if (rel > n / 2) rel -= n;
-    card.el.style.transform = 'translate(' + (w / 2 + rel * slot - cw / 2) + 'px, -50%)';
+    card.el.style.transform = 'translate(' + (w / 2 + rel * slot - cardW / 2) + 'px, -50%)';
     card.el.style.zIndex = String(10 - Math.abs(rel));
     card.el.style.opacity = (rel === 0) ? '1' : (Math.abs(rel) === 1 ? '.78' : '.45');
+    /* off-stage cards stay visible (they peek) but exit the tab
+       order and the accessibility tree; opacity alone removes
+       neither, so keyboard users tabbed into dimmed side cards */
+    if (rel === 0) card.el.removeAttribute('inert');
+    else card.el.setAttribute('inert', '');
   });
 }
 
 function go(step){
   closePop(); /* the pad belongs to the card in focus; don't let it ride along */
-  var n = cards.length;
+  const n = cards.length;
   index = ((index + step) % n + n) % n;
   layout();
 }
 
-document.getElementById('prevBtn').addEventListener('click', function(){ go(-1); });
-document.getElementById('nextBtn').addEventListener('click', function(){ go(1); });
+document.getElementById('prevBtn').addEventListener('click', () => { go(-1); });
+document.getElementById('nextBtn').addEventListener('click', () => { go(1); });
 
 /* keyboard navigation on the focused stage; arrows pressed inside an
    input are stopped upstream unless the caret is parked at an edge */
-stage.addEventListener('keydown', function(e){
+stage.addEventListener('keydown', e => {
   if (e.defaultPrevented) return;
   if (e.key === 'ArrowLeft'){ e.preventDefault(); go(-1); }
   else if (e.key === 'ArrowRight'){ e.preventDefault(); go(1); }
 });
 
-var reducedMotion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
+const reducedMotion = window.matchMedia ? window.matchMedia('(prefers-reduced-motion: reduce)') : null;
 function applyRM(){
   if (reducedMotion && reducedMotion.matches) stage.classList.add('rm');
   else stage.classList.remove('rm');
 }
 if (reducedMotion && reducedMotion.addEventListener) reducedMotion.addEventListener('change', applyRM);
 
-var resizeTimer = null;
-window.addEventListener('resize', function(){
+let resizeTimer = null;
+window.addEventListener('resize', () => {
   stage.classList.remove('armed'); /* no decorative slide while resizing */
+  measure();
   layout();
   if (resizeTimer) clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(function(){
-    requestAnimationFrame(function(){ requestAnimationFrame(function(){ stage.classList.add('armed'); }); });
+  resizeTimer = setTimeout(() => {
+    requestAnimationFrame(() => requestAnimationFrame(() => stage.classList.add('armed')));
   }, 120);
 });
 
 /* ---------------- rates: fetch, fallback, bounds ---------------- */
 function fetchJSON(url, timeoutMs){
-  return new Promise(function(resolve, reject){
-    var settled = false;
-    var ctl = ('AbortController' in window) ? new AbortController() : null;
-    var timer = setTimeout(function(){
+  return new Promise((resolve, reject) => {
+    let settled = false;
+    const ctl = ('AbortController' in window) ? new AbortController() : null;
+    /* single settle point: clears the timer and guarantees a one-shot
+       resolve/reject, replacing three copies of the same bookkeeping */
+    const timer = setTimeout(() => {
       if (ctl) ctl.abort();
-      if (!settled){ settled = true; reject(new Error('timeout after ' + timeoutMs + 'ms')); }
+      finish(reject, new Error('timeout after ' + timeoutMs + 'ms'));
     }, timeoutMs);
-    var opts = ctl ? {signal: ctl.signal} : undefined;
-    fetch(url, opts).then(function(r){
-      if (!r.ok) throw new Error('HTTP ' + r.status);
-      return r.json();
-    }).then(function(j){
-      if (!settled){ settled = true; clearTimeout(timer); resolve(j); }
-    }).catch(function(err){
-      if (!settled){ settled = true; clearTimeout(timer); reject(err); }
-    });
+    function finish(fn, arg){
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      fn(arg);
+    }
+    fetch(url, ctl ? {signal: ctl.signal} : undefined)
+      .then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r.json();
+      })
+      .then(j => finish(resolve, j))
+      .catch(err => finish(reject, err));
   });
 }
 
@@ -780,13 +910,16 @@ function looksLikeFrank(j){ return j && typeof j.base === 'string' && j.rates &&
 
 /* NZD per 1 unit of `other`, via quotient-of-per-base rates; null if unavailable */
 function computeRate(rates, base, other){
-  var n = rates[NZD];
-  var o = rates[other];
+  /* a source never quotes its own base currency, so read the declared
+     base as 1; without this, EUR/NZD went dark whenever the EUR-based
+     Frankfurter fallback served the rates */
+  const n = (base === NZD) ? 1 : rates[NZD];
+  const o = (other === base) ? 1 : rates[other];
   if (typeof n !== 'number' || typeof o !== 'number'){
     console.warn('[FX Convert] ' + other + '/' + NZD + ': source ' + base + ' is missing a quote for the pair (NZD=' + n + ', ' + other + '=' + o + '); marking pair unavailable.');
     return null;
   }
-  var nzdPerOther = n / o;
+  const nzdPerOther = n / o;
   if (!(nzdPerOther >= BOUND_LO && nzdPerOther <= BOUND_HI)){
     console.warn('[FX Convert] ' + other + '/' + NZD + ' = ' + nzdPerOther.toFixed(6) + ' falls outside sanity bounds ' + BOUND_LO + '\u2013' + BOUND_HI + '; marking pair unavailable rather than substituting a value.');
     return null;
@@ -795,8 +928,8 @@ function computeRate(rates, base, other){
 }
 
 function applyRates(rates, base, label, when){
-  state = {base: base, rates: rates, label: label};
-  cards.forEach(function(card){
+  state = {base, rates, label};
+  cards.forEach(card => {
     card.rate = computeRate(rates, base, card.other);
     updateOutput(card);
   });
@@ -805,7 +938,7 @@ function applyRates(rates, base, label, when){
 
 function failAll(reason){
   state = null;
-  cards.forEach(function(card){
+  cards.forEach(card => {
     card.rate = null;
     updateOutput(card); /* outputs clear; inputs stay editable */
   });
@@ -820,40 +953,42 @@ function refreshRates(){
   updBtn.textContent = 'Updating\u2026';
   setStatus('Fetching live rates\u2026', 'busy');
 
-  fetchJSON(PRIMARY_URL, PRIMARY_MS).then(function(j){
-    if (!looksLikeErApi(j)) throw new Error('primary response malformed');
-    return {rates: j.rates, base: j.base_code, label: 'open.er-api.com'};
-  }).catch(function(err){
-    console.warn('[FX Convert] Primary source (open.er-api.com) failed: ' + err.message);
-    return fetchJSON(FALLBACK_URL, FALLBACK_MS).then(function(j2){
-      if (!looksLikeFrank(j2)) throw new Error('fallback response malformed');
-      return {rates: j2.rates, base: j2.base, label: 'frankfurter.app'};
+  fetchJSON(PRIMARY_URL, PRIMARY_MS)
+    .then(j => {
+      if (!looksLikeErApi(j)) throw new Error('primary response malformed');
+      return {rates: j.rates, base: j.base_code, label: 'open.er-api.com'};
+    })
+    .catch(err => {
+      console.warn('[FX Convert] Primary source (open.er-api.com) failed: ' + err.message);
+      return fetchJSON(FALLBACK_URL, FALLBACK_MS).then(j2 => {
+        if (!looksLikeFrank(j2)) throw new Error('fallback response malformed');
+        return {rates: j2.rates, base: j2.base, label: 'frankfurter.app'};
+      });
+    })
+    .then(win => applyRates(win.rates, win.base, win.label, new Date()))
+    .catch(err => failAll(err.message))
+    .then(() => {
+      busy = false;
+      updBtn.disabled = false;
+      updBtn.textContent = 'Update Rates';
     });
-  }).then(function(win){
-    applyRates(win.rates, win.base, win.label, new Date());
-  }).catch(function(err){
-    failAll(err.message);
-  }).then(function(){
-    busy = false;
-    updBtn.disabled = false;
-    updBtn.textContent = 'Update Rates';
-  });
 }
 
 updBtn.addEventListener('click', refreshRates);
 
 /* ---------------- boot ---------------- */
-PAIRS.forEach(function(p){
-  var card = buildCard(p);
+PAIRS.forEach(p => {
+  const card = buildCard(p);
   cards.push(card);
   render(card);
   stage.insertBefore(card.el, document.getElementById('nextBtn'));
 });
 
 applyRM();
+measure();
 layout();
 /* arm transitions only after first paint, so opening the page never animates */
-requestAnimationFrame(function(){ requestAnimationFrame(function(){ stage.classList.add('armed'); }); });
+requestAnimationFrame(() => requestAnimationFrame(() => stage.classList.add('armed')));
 
 refreshRates();
 
