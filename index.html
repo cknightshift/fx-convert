@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FX Convert • Currency Convert</title>
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src https://open.er-api.com https://frankfurter.app https://api.frankfurter.app; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src https://open.er-api.com https://api.frankfurter.dev; base-uri 'none'; form-action 'none'">
 <style>
 :root{
   --bg:#081410;
@@ -12,7 +12,6 @@
   --teal:#3ee6c8;
   --plum:#b04e90;
   --rose-light:#c9659f; /* lightest rose from Update Rates button gradient */
-  --gold:#d4b57a;
   --ink:#eaf6f2;
   --mut:#7fa89e;
   --dim:#4f756c;
@@ -394,13 +393,53 @@ footer{
   </svg>
   <p class="sig">Engineered with Proton's Clever Kitty (Lumo AI)</p>
   <div class="meta">
-    <span class="ver">v10.20</span>
+    <span class="ver">v10.23</span>
   </div>
 </footer>
 
 <script>
 (function(){
 'use strict';
+
+/* ===== v10.23 — exponent-free settling completed at magnitude ==
+   - v10.22 closed the tiny side of the settle round-trip but its
+     large paths still emitted exponent form: toFixed() defers to
+     exponential notation at 1e21 and above, so both the overflow
+     fallback and the |r| >= 1 branch handed back "1e+300"-style
+     strings the tokenizer rejects. Both paths now expand the exact
+     integer via BigInt — every double >= 2^52 is integer-valued,
+     and BigInt predates inert in browser support, so the app's
+     floor already covers it. Astronomical results now fill the
+     input with plain digits: honest, occasionally long.
+   ================================================================ */
+
+/* ===== v10.22 — fallback hardening: honest wording, uniform base ==
+   - The both-sources-failed message no longer blames the connection:
+     a malformed or empty fallback response also routes here, so the
+     status line now just invites a retry and asserts nothing about
+     the cause. (Console warn still carries the real reason.)
+   - The Frankfurter adapter now insists the rows declare the base we
+     asked for (EUR), rejecting a reshaped response loudly with a
+     precise console reason instead of adapting to it. The unused
+     --gold token was retired from :root in passing.
+   - fmtPlain no longer emits exponent form (5e-7, 1e+300) when a
+     settled value is tiny or astronomical: the tokenizer rejects
+     the 'e', so a value the app itself settled would resurface as
+     the invalid-character hint. Plain-digit expansion keeps the
+     settle round-trip re-parseable.
+   ================================================================ */
+
+/* ===== v10.21 — Frankfurter fallback moved to the v2 API ========
+   - v1 (api.frankfurter.app) is deprecated upstream; the fallback
+     now calls https://api.frankfurter.dev/v2/rates, quoting exactly
+     the currencies the carousel needs. v2 returns a flat array of
+     {date, base, quote, rate} rows instead of v1's {base, rates}
+     map, so a small adapter folds the rows into the per-base map
+     the conversion engine already reads. The declared base comes
+     from the rows themselves and is still read as 1, so EUR/NZD
+     keeps working when the fallback serves the rates.
+   - CSP connect-src follows the host change (api.frankfurter.dev).
+   ================================================================ */
 
 /* ===== v10.20 — gem-cut beacon marks the active card =============
    - Decorative chevron pinned to the stage's top centre, cut from
@@ -439,7 +478,11 @@ const PAIRS = [
 const SETTLE_MS = 1200;
 const BOUND_LO = 0.02, BOUND_HI = 6.0;
 const PRIMARY_URL  = 'https://open.er-api.com/v6/latest/USD';
-const FALLBACK_URL = 'https://api.frankfurter.app/latest?from=EUR';
+const FALLBACK_BASE = 'EUR';
+/* v2 quotes exactly what the carousel needs — NZD plus every paired
+   currency except the base itself; computeRate reads the base as 1 */
+const FALLBACK_URL = 'https://api.frankfurter.dev/v2/rates?base=' + FALLBACK_BASE +
+  '&quotes=NZD,' + PAIRS.map(p => p[0]).filter(c => c !== FALLBACK_BASE).join(',');
 const PRIMARY_MS = 12000, FALLBACK_MS = 8000;
 const NUM = /[0-9.]/;
 
@@ -546,11 +589,22 @@ function evaluate(src){
 
 /* ---------------- formatting ---------------- */
 function fmtPlain(v){
+  /* String() slips into exponent form above ~1e21 and below 1e-6,
+     and the tokenizer rejects the 'e' — a settled value the app
+     itself wrote would resurface as the invalid-character hint.
+     Expand to plain digits instead: the 1e-10 rounding step means
+     toFixed never rounds a lie into the figure */
   const r = Math.round(v * 1e10) / 1e10;
-  /* values beyond ~1e298 overflow the multiply; v itself is finite,
-     so fall back to its honest exponent form */
-  if (!isFinite(r)) return String(v);
-  return String(r);
+  /* 1e-10 rounding overflowed; v itself is a finite, integer-valued
+     double this big, so BigInt expands it to plain digits exactly */
+  if (!isFinite(r)) return String(BigInt(v));
+  const s = String(r);
+  if (!s.includes('e')) return s;
+  /* |r| >= 1 with an 'e' means r >= 1e21, where toFixed() itself
+     defers to exponential form; BigInt expands the exact integer
+     instead (every double >= 2^52 is integer-valued, so this
+     cannot throw) */
+  return (Math.abs(r) >= 1) ? String(BigInt(r)) : r.toFixed(10);
 }
 function fmtMoney(v){
   if (!isFinite(v)) return '';
@@ -906,7 +960,14 @@ function fetchJSON(url, timeoutMs){
 }
 
 function looksLikeErApi(j){ return j && j.result === 'success' && typeof j.base_code === 'string' && j.rates && typeof j.rates === 'object'; }
-function looksLikeFrank(j){ return j && typeof j.base === 'string' && j.rates && typeof j.rates === 'object'; }
+/* v2 serves a flat array of {date, base, quote, rate} rows rather
+   than v1's {base, rates:{}} map */
+function looksLikeFrankV2(j){
+  return Array.isArray(j) && j.length > 0 && j.every(r =>
+    r && typeof r === 'object' &&
+    typeof r.base === 'string' && typeof r.quote === 'string'
+  );
+}
 
 /* NZD per 1 unit of `other`, via quotient-of-per-base rates; null if unavailable */
 function computeRate(rates, base, other){
@@ -942,7 +1003,7 @@ function failAll(reason){
     card.rate = null;
     updateOutput(card); /* outputs clear; inputs stay editable */
   });
-  setStatus('Rates unavailable \u2014 check your connection and tap Update Rates', 'bad');
+  setStatus('Rates unavailable \u2014 tap Update Rates to retry', 'bad');
   console.warn('[FX Convert] Both rate sources failed. ' + reason);
 }
 
@@ -961,8 +1022,18 @@ function refreshRates(){
     .catch(err => {
       console.warn('[FX Convert] Primary source (open.er-api.com) failed: ' + err.message);
       return fetchJSON(FALLBACK_URL, FALLBACK_MS).then(j2 => {
-        if (!looksLikeFrank(j2)) throw new Error('fallback response malformed');
-        return {rates: j2.rates, base: j2.base, label: 'frankfurter.app'};
+        if (!looksLikeFrankV2(j2)) throw new Error('fallback response malformed');
+        /* every row must declare the same base, and it must be the base
+           we asked for: a deviation breaks the request's contract (EUR
+           is excluded from the quotes for being the base), so refuse
+           loudly rather than trust a reshaped response */
+        const rowsBase = j2[0].base;
+        if (rowsBase !== FALLBACK_BASE || j2.some(r => r.base !== rowsBase)){
+          throw new Error('fallback base mismatch: expected ' + FALLBACK_BASE + ', rows declare ' + rowsBase);
+        }
+        const rates = {};
+        j2.forEach(r => { if (typeof r.rate === 'number' && isFinite(r.rate)) rates[r.quote] = r.rate; });
+        return {rates: rates, base: rowsBase, label: 'frankfurter.dev'};
       });
     })
     .then(win => applyRates(win.rates, win.base, win.label, new Date()))
