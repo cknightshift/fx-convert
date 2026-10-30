@@ -173,9 +173,9 @@ header .logo{flex:0 0 auto;display:block}
 .pop-slot{position:relative;height:0}
 .calc-pop{
   position:absolute;right:0;top:6px;z-index:40;
-  display:grid;grid-template-columns:repeat(3,52px);gap:6px;
+  display:grid;grid-template-columns:repeat(3,48px);gap:5px;
   background:#0e2620;border:1px solid var(--card-edge);border-radius:12px;
-  padding:10px;box-shadow:0 16px 40px rgba(0,0,0,.55);
+  padding:7px;box-shadow:0 16px 40px rgba(0,0,0,.55);
 }
 /* the pad's own display rule would otherwise outrank the [hidden]
    attribute's UA stylesheet, so a "closed" pad stayed visible
@@ -399,13 +399,26 @@ footer{
     </g>
   </svg>
   <p class="sig">Made by Proton's Clever Kitty (Lumo AI)</p>
-  <p class="maint">FX Convert — Maintained by <a href="https://github.com/cknightshift" target="_blank" rel="noopener noreferrer">cknightshift</a><span class="ver">v10.27</span></p>
+  <p class="maint">FX Convert — Maintained by <a href="https://github.com/cknightshift" target="_blank" rel="noopener noreferrer">cknightshift</a><span class="ver">v10.28</span></p>
   <p class="priv"><a href="https://github.com/cknightshift/fx-convert/blob/main/README.md" target="_blank" rel="noopener noreferrer">Catnip &amp; Privacy Policy</a><span style="margin:0 6px;color:#b04e90">&middot;</span><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer" style="color:var(--rose-light);text-decoration:none">Exchange Rate API</a></p>
 </footer>
 
 <script>
 (function(){
 'use strict';
+
+/* ===== v10.28 — keypad compaction (container only) ===============
+   - On short viewports the pad's drop from the card's foot
+     spilled past the stage's overflow:hidden edge, costing it
+     its bottom padding to the clip. The container is trimmed —
+     48px keys, 5px gaps, 7px padding — recovering ~7px of
+     height, which should pull the clipped padding back inside
+     on the displays that clipped. Keys keep their 40px touch
+     height and 18px glyphs: only the container tightened.
+   - Honest limit, recorded rather than solved: on sufficiently
+     short viewports the pad can still clip. A flip-away guard
+     was considered and deferred — measured, not needed yet.
+   ================================================================ */
 
 /* ===== v10.27 — display bound on colossal outputs ==============
    - v10.26 taught the app to speak when a result overflowed the
