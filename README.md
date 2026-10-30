@@ -1,4 +1,4 @@
-# **FX Convert** • Currency Convert
+# FX Convert • Currency Convert
 ~~Catnip~~ *Read Me & Privacy Policy*  
 Last updated: 29 October 2026  
 
@@ -14,7 +14,7 @@ This app will not convert "meow" for you. It **converts currencies** — and fus
 
 ## What It Actually Converts
 
-**Between these five currencies only** (tap ↔ to flip direction):
+**Between these five currencies only** (tap ↔ to flip direction — not here, only in the app!):
 
 | From | | To |
 |------|--|----|
@@ -44,11 +44,23 @@ Everything you type lives only in your browser's memory. Close the tab and it's 
 
 ### One Honest ~~Pawnote~~ Footnote
 
-Only four parties are involved in serving this website:
+Only three parties are involved in serving this website:
 
 | Who | What they see |
 |-----|---------------|
 | **GitHub** (hosts this page) | Your IP address, logged for security — as any web host does |
-| **Cloudflare** (routes the currency rate requests) | Your IP address as it delivers the request |
-| **The currency rate servers** (`open.er-api.com`, `api.frankfurter.dev`) | The same fixed currency rate request every visitor sends — nothing personal in it |
+| **The currency rate servers** (`open.er-api.com`, `api.frankfurter.dev`) | Your IP address, as with any web request — and the same fixed currency rate request every visitor sends; nothing personal in it |
 | **Your device** | Everything you type. The maths happens right there, locally — for your eyes only |
+
+---
+
+## Credits & Catnip
+
+This cat doesn't hunt its own rates. Fresh figures are demanded from two public servers, summoned the moment you ask:
+
+- **[Exchange Rate API](https://www.exchangerate-api.com)** — the primary bowl. Daily rates for 160+ currencies, served free and without an API key. Their one ask is a credit line, which you'll also find in the app's footer where the rates actually appear.
+- **[Frankfurter](https://frankfurter.dev)** — the backup bowl, served when the first is empty. Open source, and stocked with reference rates blended from dozens of central banks and monetary authorities.
+
+Both bowls run on kindness and zero API keys.
+
+[FX Convert](https://cknightshift.github.io/fx-convert/) is maintained by [cknightshift](https://github.com/cknightshift).
