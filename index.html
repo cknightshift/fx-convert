@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FX Convert • Currency Convert</title>
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src https://open.er-api.com https://api.frankfurter.dev; base-uri 'none'; form-action 'none'">
+<meta name="referrer" content="no-referrer">
 <style>
 :root{
   --bg:#081410;
@@ -211,13 +212,19 @@ footer{
 }
 .gem{display:block;margin:0 auto 10px}
 .sig{
-  font-size:15.5px;font-style:normal;color:var(--mut);
+  font-size:13px;font-style:normal;color:var(--mut);
   letter-spacing:.01em;
 }
-.meta{
-  display:flex;align-items:center;justify-content:center;gap:14px;
-  margin-top:12px;font-size:12px;color:var(--dim);letter-spacing:.06em;
+.maint{
+  margin-top:4px;font-size:15.5px;color:var(--mut);letter-spacing:.01em;
 }
+.maint a,.priv a{text-decoration:none}
+.maint a{color:var(--rose-light)}
+.maint a:hover,.priv a:hover{color:var(--teal)}
+.priv{
+  margin-top:6px;font-size:13px;color:var(--mut);letter-spacing:.01em;
+}
+.priv a{color:var(--mut)}
 .dot{
   width:9px;height:9px;border-radius:50%;display:inline-block;
   background:#57756c;vertical-align:middle;flex:0 0 auto;
@@ -225,7 +232,7 @@ footer{
 .dot.live{background:var(--live);box-shadow:0 0 6px rgba(67,217,138,.7)}
 .dot.bad{background:var(--bad);box-shadow:0 0 6px rgba(255,95,102,.7)}
 .dot.busy{background:#57756c}
-.ver{color:var(--rose-light);letter-spacing:.12em}
+.ver{font-size:12px;color:var(--rose-light);letter-spacing:.12em;margin-left:7px}
 
 /* gold spark orbits the heart's edge in sporadic arcs, twinkling as it goes */
 .orbiter{
@@ -391,15 +398,55 @@ footer{
       <polygon class="spk" style="--td:3.7s;-webkit-animation-delay:.9s;animation-delay:.9s" points="32,54.4 34,57.2 32,60 30,57.2" fill="url(#gsh)"/>
     </g>
   </svg>
-  <p class="sig">Engineered with Proton's Clever Kitty (Lumo AI)</p>
-  <div class="meta">
-    <span class="ver">v10.24</span>
-  </div>
+  <p class="sig">Made by Proton's Clever Kitty (Lumo AI)</p>
+  <p class="maint">FX Convert — Maintained by <a href="https://github.com/cknightshift" target="_blank" rel="noopener noreferrer">cknightshift</a><span class="ver">v10.27</span></p>
+  <p class="priv"><a href="https://github.com/cknightshift/fx-convert/blob/main/README.md" target="_blank" rel="noopener noreferrer">Catnip &amp; Privacy Policy</a><span style="margin:0 6px;color:#b04e90">&middot;</span><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer" style="color:var(--rose-light);text-decoration:none">Exchange Rate API</a></p>
 </footer>
 
 <script>
 (function(){
 'use strict';
+
+/* ===== v10.27 — display bound on colossal outputs ==============
+   - v10.26 taught the app to speak when a result overflowed the
+     double range, but a merely enormous finite result (a 40-digit
+     amount times nine, say) still rendered as a wall of 30px
+     digits. The card grew, the absolutely-positioned calculator
+     pad rode down with it, and the stage's overflow:hidden edge
+     sliced the pad in half.
+   - updateOutput() now declines to render a converted figure at or
+     above 1e21, showing the same muted "Result too large" hint
+     instead. 1e21 is the landmark the settle code already knows:
+     it is where JS itself abandons plain notation. The input still
+     settles to plain digits — fmtPlain is untouched, so the BigInt
+     round-trip guard keeps its teeth; only the output declines.
+   - Red stays reserved for divide-by-zero; this rides the quiet
+     channel, like the invalid-character hint.
+   ================================================================ */
+
+/* ===== v10.26 — review batch: attribution, focus, honest hints ==
+   - Focus retention: navigating away from a card whose input held
+     focus inerted the outgoing card and the browser relocated
+     focus to <body>, killing arrow-key navigation until the user
+     clicked or tabbed. layout() now redirects focus to the newly
+     centred card's input whenever the previously focused element
+     lived in a card that just went inert.
+   - Overflow hint (evaluate, updateOutput): a finite-operand
+     expression whose result exceeds the double range (e.g. two huge
+     literals multiplied) used to go blank with no message; it now
+     shows the muted "Result too large" hint — red stays reserved
+     for divide-by-zero.
+   - Frankfurter v2 diagnostics (refreshRates adapter, computeRate
+     interplay): malformed rate rows are counted and logged
+     distinctly instead of surfacing later as a misleading
+     "missing a quote" warning.
+   - Calculator pad no longer closes on clicks inside the amount
+     field (caret repositioning mid-formula).
+   - Footer: Exchange Rate API credit added alongside Catnip &
+     Privacy Policy (attribution required by the open endpoint's
+     terms), signature reworded to "Made by", footer text resized,
+     referrer set to no-referrer.
+   ================================================================ */
 
 /* ===== v10.23 — exponent-free settling completed at magnitude ==
    - v10.22 closed the tiny side of the settle round-trip but its
@@ -561,11 +608,11 @@ function parseFactor(tk){
   throw new Error('syntax');
 }
 
-/* evaluate -> {ok, value, complete, hasOp, div0, bad}
+/* evaluate -> {ok, value, complete, hasOp, div0, bad, overflow}
    bad = tokenizer rejection (invalid character / malformed number):
    grounds for a gentle hint, unlike a still-cooking expression */
 function evaluate(src){
-  const out = {ok:false, value:NaN, complete:false, hasOp:false, div0:false, bad:false};
+  const out = {ok:false, value:NaN, complete:false, hasOp:false, div0:false, bad:false, overflow:false};
   const s = String(src == null ? '' : src).trim();
   if (!s) return out;
   let toks;
@@ -579,7 +626,10 @@ function evaluate(src){
   try {
     const v = parseExpr(ctx);
     if (ctx.pos !== toks.length) return out; /* trailing operator: incomplete */
-    if (!isFinite(v)) return out;
+    if (!isFinite(v)){
+      if (v === Infinity || v === -Infinity) out.overflow = true;
+      return out;
+    }
     out.ok = true; out.value = v; out.complete = true;
   } catch(e){
     if (e && e.div0) out.div0 = true;
@@ -744,6 +794,7 @@ function updateOutput(card){
   if (!raw.trim()){ clearOut(card); return ev; }
 
   if (ev.div0){ showMsg(card, 'Cannot divide by zero'); clearOut(card); return ev; }
+  if (ev.overflow){ showMsg(card, 'Result too large', 'hint'); clearOut(card); return ev; }
   /* quiet guidance for invalid characters: muted tone, never alarm red */
   if (ev.bad){ showMsg(card, 'Numbers and + \u2212 \u00d7 \u00f7 only', 'hint'); clearOut(card); return ev; }
   if (!(ev.ok && ev.complete)){ clearOut(card); return ev; } /* expression still cooking */
@@ -758,6 +809,13 @@ function updateOutput(card){
     return ev;
   }
   const conv = (card.dir === 'otherToNzd') ? ev.value * card.rate : ev.value / card.rate;
+  /* finite results at or above 1e21 are computable but display-hostile:
+     a wall of digits grows the card and shoves the calculator pad past
+     the stage's overflow:hidden edge. 1e21 is where JS itself abandons
+     plain notation, and it sits ~8 orders of magnitude above any sane
+     conversion. The input still settles to plain digits (fmtPlain is
+     untouched); only the output declines to render the figure. */
+  if (Math.abs(conv) >= 1e21){ showMsg(card, 'Result too large', 'hint'); clearOut(card); return ev; }
   card.out.textContent = fmtMoney(conv);
   card.out.classList.remove('na');
   return ev;
@@ -863,7 +921,7 @@ function onPopKey(k){
 
 document.addEventListener('mousedown', e => {
   if (!pop.hidden && openCard){
-    if (!pop.contains(e.target) && !openCard.calcBtn.contains(e.target)) closePop();
+    if (!pop.contains(e.target) && !openCard.calcBtn.contains(e.target) && !openCard.amt.contains(e.target)) closePop();
   }
 });
 document.addEventListener('keydown', e => {
@@ -882,18 +940,30 @@ function layout(){
   const GAP = 26;
   const slot = cardW + GAP;
   const n = cards.length;
+  /* capture focus before reflow — we may need to restore it */
+  const focused = document.activeElement;
+  let focusCard = null;
+  cards.forEach((card, i) => {
+    if (card.el.contains(focused)) focusCard = card;
+  });
+
   cards.forEach((card, i) => {
     let rel = ((i - index) % n + n) % n;
     if (rel > n / 2) rel -= n;
     card.el.style.transform = 'translate(' + (w / 2 + rel * slot - cardW / 2) + 'px, -50%)';
     card.el.style.zIndex = String(10 - Math.abs(rel));
     card.el.style.opacity = (rel === 0) ? '1' : (Math.abs(rel) === 1 ? '.78' : '.45');
-    /* off-stage cards stay visible (they peek) but exit the tab
-       order and the accessibility tree; opacity alone removes
-       neither, so keyboard users tabbed into dimmed side cards */
     if (rel === 0) card.el.removeAttribute('inert');
     else card.el.setAttribute('inert', '');
   });
+
+  /* if focus was in a card that just went inert, redirect to
+     the newly active card's input (or stage as fallback) */
+  if (focusCard && focusCard.el.hasAttribute('inert')){
+    const active = cards[index];
+    if (active && active.amt){ active.amt.focus(); }
+    else stage.focus();
+  }
 }
 
 function go(step){
@@ -1032,7 +1102,12 @@ function refreshRates(){
           throw new Error('fallback base mismatch: expected ' + FALLBACK_BASE + ', rows declare ' + rowsBase);
         }
         const rates = {};
-        j2.forEach(r => { if (typeof r.rate === 'number' && isFinite(r.rate)) rates[r.quote] = r.rate; });
+        let skipped = 0;
+        j2.forEach(r => {
+          if (typeof r.rate === 'number' && isFinite(r.rate)) rates[r.quote] = r.rate;
+          else skipped++;
+        });
+        if (skipped > 0) console.warn('[FX Convert] Frankfurter v2 skipped ' + skipped + ' malformed rate row(s).');
         return {rates: rates, base: rowsBase, label: 'frankfurter.dev'};
       });
     })
