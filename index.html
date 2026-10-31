@@ -22,6 +22,11 @@
   --bad:#ff5f66;
 }
 *{margin:0;padding:0;box-sizing:border-box}
+/* iOS Safari double-tap zoom guard: rapid tapping on controls — the
+   calculator pad above all — is exactly the gesture that triggers it;
+   manipulation removes the zoom shortcut on these elements without
+   touching page pinch-zoom */
+.btn,.nav,.swap,.calc-btn,.calc-pop button{touch-action:manipulation}
 html,body{min-height:100%}
 body{
   font-family:"Avenir Next","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
@@ -399,13 +404,47 @@ footer{
     </g>
   </svg>
   <p class="sig">Made with Proton's Clever Cat (Lumo AI)</p>
-  <p class="maint">FX Convert — Maintained by <a href="https://github.com/cknightshift" target="_blank" rel="noopener noreferrer">cknightshift</a><span class="ver">v10.31</span></p>
+  <p class="maint">FX Convert — Maintained by <a href="https://github.com/cknightshift" target="_blank" rel="noopener noreferrer">cknightshift</a><span class="ver">v10.32</span></p>
   <p class="priv"><a href="https://github.com/cknightshift/fx-convert/blob/main/README.md" target="_blank" rel="noopener noreferrer">Catnip &amp; Privacy Policy</a><span style="margin:0 6px;color:#b04e90">&middot;</span><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer" style="color:var(--rose-light);text-decoration:none">Rates By Exchange Rate API</a></p>
 </footer>
 
 <script>
 (function(){
 'use strict';
+
+/* ===== v10.32 — IME re-raise on pad close ========================
+   - Closing the calculator pad re-raised the Android soft
+     keyboard the user had just lowered. Root cause, established
+     by field test: a tap landing while the amount field still
+     holds focus re-raises the IME, and both closing controls —
+     the checkmark key and the calc button — carry mousedown
+     preventDefault precisely to keep focus in the input, so
+     focus survived the closing tap. Outside-tap closes never
+     popped the keyboard because focus falls away naturally.
+     Both close gestures now blur the amount field at mousedown
+     on coarse-pointer devices (pointer: coarse), mirroring the
+     outside tap; desktop focus retention is untouched.
+   - onPopKey also now receives the activation origin
+     (MouseEvent.detail via the delegated click) and refocuses
+     only for keyboard activation (detail 0) — focus would
+     otherwise strand on the hidden button for Enter/Space users.
+     Settle timers need no special handling: after the blur, the
+     v10.30 containment guard fails and no reclaim occurs, while
+     the value still settles on its own clock.
+   - evaluate()'s catch no longer logs 'incomplete' or 'syntax':
+     parseFactor throws both as control flow on every keystroke
+     that leaves a trailing or doubled operator, so the v10.31
+     logging fired on ordinary typing — console noise on the
+     hottest path in the app. Unexpected errors (the minus-wall
+     RangeError) still log.
+   - touch-action: manipulation on all tappable controls (buttons,
+     nav arrows, swap, calc, pad keys): rapid tapping in the pad is
+     the precise gesture that triggers iOS Safari's double-tap
+     zoom; the guard removes it without affecting page pinch-zoom.
+     From the same outside review: Frankfurter v2's flat-row shape
+     is now doc-confirmed (frankfurter.dev guides), not
+     field-test-only — no code change, recorded for the trail.
+   ================================================================ */
 
 /* ===== v10.31 — honest feedback batch ============================
    - Space-separated numbers ("1 234.56") used to fail in total
@@ -597,6 +636,9 @@ const updBtn     = document.getElementById('updbtn');
 const statusWrap = document.getElementById('statusWrap');
 const statusText = document.getElementById('statusText');
 const statusDot  = document.getElementById('statusDot');
+/* touch-device gate: on a phone, closing the pad must let focus fall
+   away from the amount field or the closing tap re-raises the IME */
+const COARSE = window.matchMedia ? window.matchMedia('(pointer: coarse)').matches : false;
 
 let state = null;        /* { base, rates, label } or null */
 let busy = false;
@@ -701,11 +743,16 @@ function evaluate(src){
     out.ok = true; out.value = v; out.complete = true;
   } catch(e){
     if (e && e.div0) out.div0 = true;
-    /* anything else reaching here (a RangeError from parseFactor's
-       unary recursion on a pasted wall of minus signs, say) used to
-       vanish: output blank, no hint, no trace. Log it so the failure
-       is at least diagnosable */
-    else console.warn('[FX Convert] evaluate: ' + (e && e.message ? e.message : e));
+    /* 'incomplete' and 'syntax' are the parser's own control flow —
+       parseFactor throws them on every keystroke that leaves a
+       trailing or doubled operator while the expression cooks — so
+       they must not reach the log. Everything else (a RangeError
+       from parseFactor's unary recursion on a pasted wall of minus
+       signs, say) used to vanish: output blank, no hint, no trace.
+       Log that so the failure is at least diagnosable */
+    else if (!(e instanceof Error && (e.message === 'incomplete' || e.message === 'syntax'))){
+      console.warn('[FX Convert] evaluate: ' + (e && e.message ? e.message : e));
+    }
   }
   return out;
 }
@@ -835,8 +882,13 @@ function buildCard(pair){
   });
 
   card.calcBtn.addEventListener('click', () => { togglePop(card); });
-  /* mousedown.preventDefault keeps focus in the input (never steals focus) */
-  card.calcBtn.addEventListener('mousedown', e => { e.preventDefault(); });
+  /* mousedown.preventDefault keeps focus in the input (never steals focus) —
+     except on a touch device closing an already-open pad: focus falls away
+     from the amount field so the closing tap cannot re-raise the IME */
+  card.calcBtn.addEventListener('mousedown', e => {
+    if (COARSE && openCard === card && !pop.hidden){ card.amt.blur(); return; }
+    e.preventDefault();
+  });
 
   return card;
 }
@@ -960,11 +1012,18 @@ let openCard = null;
 
 /* two delegated listeners replace a dozen per-key attachments */
 pop.addEventListener('mousedown', e => {
-  if (e.target.closest('button')) e.preventDefault(); /* focus stays in input */
+  const b = e.target.closest('button');
+  if (!b) return;
+  /* ✓ on a touch device closes the pad: drop focus from the amount
+     field at mousedown, before the closing tap can be read as
+     interaction with a focused editable, so the Android IME stays
+     down — the outside-tap close never pops it; this now mirrors it */
+  if (COARSE && b.dataset.k === '\u2713'){ if (openCard) openCard.amt.blur(); return; }
+  e.preventDefault(); /* focus stays in input */
 });
 pop.addEventListener('click', e => {
   const b = e.target.closest('button');
-  if (b) onPopKey(b.dataset.k);
+  if (b) onPopKey(b.dataset.k, e.detail);
 });
 
 function togglePop(card){
@@ -980,7 +1039,7 @@ function closePop(){
   openCard = null;
 }
 
-function onPopKey(k){
+function onPopKey(k, detail){
   const card = openCard;
   if (!card) return;
   const inp = card.amt;
@@ -992,9 +1051,12 @@ function onPopKey(k){
     return;
   }
   if (k === '\u2713'){
-    /* close only: formulas settle by themselves (auto-calc + Enter) */
+    /* close only: formulas settle by themselves (auto-calc + Enter).
+       Refocus only for keyboard activation (detail 0): on touch the
+       blur at mousedown has already dropped focus, and restoring it
+       here would re-raise the Android IME the user just dismissed */
     closePop();
-    inp.focus();
+    if (detail === 0) inp.focus();
     return;
   }
   /* operator insert at caret; the key glyph is already the display form */
