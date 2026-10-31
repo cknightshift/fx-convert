@@ -398,14 +398,60 @@ footer{
       <polygon class="spk" style="--td:3.7s;-webkit-animation-delay:.9s;animation-delay:.9s" points="32,54.4 34,57.2 32,60 30,57.2" fill="url(#gsh)"/>
     </g>
   </svg>
-  <p class="sig">Made by Proton's Clever Cat (Lumo AI)</p>
-  <p class="maint">FX Convert — Maintained by <a href="https://github.com/cknightshift" target="_blank" rel="noopener noreferrer">cknightshift</a><span class="ver">v10.29</span></p>
+  <p class="sig">Made with Proton's Clever Cat (Lumo AI)</p>
+  <p class="maint">FX Convert — Maintained by <a href="https://github.com/cknightshift" target="_blank" rel="noopener noreferrer">cknightshift</a><span class="ver">v10.31</span></p>
   <p class="priv"><a href="https://github.com/cknightshift/fx-convert/blob/main/README.md" target="_blank" rel="noopener noreferrer">Catnip &amp; Privacy Policy</a><span style="margin:0 6px;color:#b04e90">&middot;</span><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer" style="color:var(--rose-light);text-decoration:none">Rates By Exchange Rate API</a></p>
 </footer>
 
 <script>
 (function(){
 'use strict';
+
+/* ===== v10.31 — honest feedback batch ============================
+   - Space-separated numbers ("1 234.56") used to fail in total
+     silence: the tokenizer skipped whitespace, parseExpr stopped
+     early, and evaluate returned neither ok nor bad, so the output
+     blanked with no hint — the only input class that failed
+     without a word. tokenize() now rejects a number token directly
+     following another number token — reachable only through
+     intervening whitespace — routing it through the existing bad
+     flag and the muted invalid-character hint. The hint text stays
+     as-is: a space is indeed outside the advertised set, even
+     though the tokenizer tolerates it around operators.
+   - Swap-button settle steal (tokenize's sibling in settleNow's
+     orbit): a settle timer surviving a click on the swap button —
+     which lives in the centred card, so v10.30's containment guard
+     passes — still yanked focus to the input 1.2 s later. The swap
+     handler now clears the card's timer. The typed value carries
+     across the swap either way and updateOutput computes from the
+     raw text, so the only cost is the formula staying unsimplified
+     until the next edit. The calc button needs nothing: its
+     mousedown is preventDefault, so focus never leaves the input.
+   - evaluate()'s catch now logs non-div0 errors to console:
+     parseFactor's unary recursion can throw RangeError on a pasted
+     wall of minus signs, which formerly vanished without a trace.
+   - Declined from the same outside review, recorded for the trail:
+     retaining last-good rates on both-sources failure (design
+     posture — outputs clear without live rates; staleness would be
+     unbounded), the x/X to × rewrite (spec'd feature), and the
+     gem/beacon SVG dimension pairs' ~1% aspect drift (invisible,
+     tier zero).
+   ================================================================ */
+
+/* ===== v10.30 — settle focus containment + signature reword ======
+   - settleNow() focus reclaim tightened. A settle timer surviving
+     a click on a control outside the card (realistically Update
+     Rates, the only such control) used to yank focus back to the
+     amount field mid-interaction, landing keystrokes meant for
+     the button. Focus now reclaims only when the centred card
+     contains document.activeElement: card-level containment, not
+     input-level, so focus inside the calculator pad (which lives
+     in the card) still reclaims. Two guards now stand and are
+     named: centred-card and containment. This resolves the known
+     limit recorded and declined at v10.29.
+   - Footer copy only: signature reworded "Made by" to
+     "Made with" (Lumo AI attribution).
+   ================================================================ */
 
 /* ===== v10.28 — keypad compaction (container only) ===============
    - On short viewports the pad's drop from the card's foot
@@ -583,6 +629,14 @@ function tokenize(src){
       if ((ns.match(/\./g) || []).length > 1) throw new Error('malformed number "' + ns + '"');
       const v = parseFloat(ns);
       if (!isFinite(v)) throw new Error('malformed number "' + ns + '"');
+      /* a number directly following another number is reachable only
+         through intervening whitespace — a thousands-grouping space
+         ("1 234.56") — which used to parse as two tokens, fail the
+         completeness check, and blank the output with no hint. Reject
+         it here so it rides the bad flag and the existing hint */
+      if (toks.length && toks[toks.length - 1].t === 'num'){
+        throw new Error('space-separated number "' + ns + '"');
+      }
       toks.push({t:'num', v}); i = j; continue;
     }
     if (ch === '+' || ch === '-' || ch === '*' || ch === '/'){
@@ -622,8 +676,9 @@ function parseFactor(tk){
 }
 
 /* evaluate -> {ok, value, complete, hasOp, div0, bad, overflow}
-   bad = tokenizer rejection (invalid character / malformed number):
-   grounds for a gentle hint, unlike a still-cooking expression */
+   bad = tokenizer rejection (invalid character / malformed number /
+   space-separated number): grounds for a gentle hint, unlike a
+   still-cooking expression */
 function evaluate(src){
   const out = {ok:false, value:NaN, complete:false, hasOp:false, div0:false, bad:false, overflow:false};
   const s = String(src == null ? '' : src).trim();
@@ -646,6 +701,11 @@ function evaluate(src){
     out.ok = true; out.value = v; out.complete = true;
   } catch(e){
     if (e && e.div0) out.div0 = true;
+    /* anything else reaching here (a RangeError from parseFactor's
+       unary recursion on a pasted wall of minus signs, say) used to
+       vanish: output blank, no hint, no trace. Log it so the failure
+       is at least diagnosable */
+    else console.warn('[FX Convert] evaluate: ' + (e && e.message ? e.message : e));
   }
   return out;
 }
@@ -745,6 +805,13 @@ function buildCard(pair){
 
   el.querySelector('.swap').addEventListener('click', () => {
     closePop(); /* the pad closes on swap, per spec */
+    /* a settle timer surviving this click used to fire 1.2 s later
+       and, the swap button living in the centred card, containment
+       passed and focus yanked to the input mid-interaction. Clearing
+       is enough: the typed value carries across the swap and
+       updateOutput computes from the raw text, so only the cosmetic
+       settle rewrite waits for the next edit */
+    if (card.timer){ clearTimeout(card.timer); card.timer = null; }
     card.dir = (card.dir === 'otherToNzd') ? 'nzdToOther' : 'otherToNzd';
     render(card);
     updateOutput(card); /* typed value carries across */
@@ -858,8 +925,14 @@ function settleNow(card, ev){
     card.amt.value = fmtPlain(ev.value);
     /* the value settles wherever it lives, but focus only follows
        the centred card: a settle timer surviving carousel travel
-       used to yank focus back to a dimmed, off-stage card */
-    if (cards[index] === card){
+       used to yank focus back to a dimmed, off-stage card. Since
+       v10.30 a second condition applies, containment: a timer
+       surviving a click on a control outside the card (Update
+       Rates) must not yank focus back either, so focus reclaims
+       only when the card holds document.activeElement. The
+       calculator pad lives in the card, so focus there still
+       reclaims */
+    if (cards[index] === card && card.el.contains(document.activeElement)){
       card.amt.focus();
       try { card.amt.setSelectionRange(card.amt.value.length, card.amt.value.length); } catch(err){}
     }
