@@ -223,9 +223,11 @@ footer{
 .maint{
   margin-top:4px;font-size:15.5px;color:var(--mut);letter-spacing:.01em;
 }
-.maint a,.priv a{text-decoration:none}
-.maint a{color:var(--rose-light)}
-.maint a:hover,.priv a:hover{color:var(--teal)}
+/* v10.34 retired the maintainer line's link, orphaning every
+   .maint a selector that used to live here; swept in the v10.35
+   tidy. The .priv halves stay: the privacy line still links */
+.priv a{text-decoration:none}
+.priv a:hover{color:var(--teal)}
 .priv{
   margin-top:6px;font-size:13px;color:var(--mut);letter-spacing:.01em;
 }
@@ -408,9 +410,15 @@ footer{
        the handle moves onto the signature line as plain text (no link),
        carrying its 15.5px rose-light with it; the version stamp rides
        at the end of the line, class and styling unchanged -->
+  <!-- v10.35: the ExchangeRate-API credit moves from the tail of the
+       privacy line to the very top of the text stack, above the
+       disclaimer — size (13px), rose-light colour and href untouched;
+       the middot separator goes with it, leaving the privacy line
+       to stand alone -->
+  <p class="priv"><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer" style="color:var(--rose-light);text-decoration:none">Rates By Exchange Rate API</a></p>
   <p class="maint">Estimates only — use at your own risk</p>
-  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.34</span></p>
-  <p class="priv"><a href="https://github.com/cknightshift/fx-convert/blob/main/README.md" target="_blank" rel="noopener noreferrer">Catnip, Disclaimer &amp; Privacy Policy</a><span style="margin:0 6px;color:#b04e90">&middot;</span><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer" style="color:var(--rose-light);text-decoration:none">Rates By Exchange Rate API</a></p>
+  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.35</span></p>
+  <p class="priv"><a href="https://github.com/cknightshift/fx-convert/blob/main/README.md" target="_blank" rel="noopener noreferrer">Catnip, Disclaimer &amp; Privacy Policy</a></p>
 </footer>
 
 <script>
