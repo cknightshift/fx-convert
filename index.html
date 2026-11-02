@@ -8,6 +8,11 @@
 <meta name="referrer" content="no-referrer">
 <style>
 :root{
+  /* v10.38 — the app is dark-only: tell the UA, so native control
+     chrome (the custom card's two select popups above all) and
+     scrollbars render in the platform's dark theme instead of
+     flashing a light one */
+  color-scheme:dark;
   --bg:#081410;
   --bg-deep:#060f0c;
   --teal:#3ee6c8;
@@ -26,7 +31,9 @@
    calculator pad above all — is exactly the gesture that triggers it;
    manipulation removes the zoom shortcut on these elements without
    touching page pinch-zoom */
-.btn,.nav,.swap,.calc-btn,.calc-pop button{touch-action:manipulation}
+/* v10.36: .ccy joined the guard — a select is a tappable control,
+   extending the v10.32 scope by its own rule */
+.btn,.nav,.swap,.calc-btn,.calc-pop button,.ccy{touch-action:manipulation}
 html,body{min-height:100%}
 body{
   font-family:"Avenir Next","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
@@ -157,6 +164,18 @@ header .logo{flex:0 0 auto;display:block}
 }
 .amt:focus{border-color:var(--teal)}
 .amt::placeholder{color:#3a5c53}
+/* v10.36 — custom card selects: they occupy the slot the static
+   .code spans hold on legacy cards, so they mirror the code
+   styling (24px bold, tracked, teal) and the plum flip for the to
+   side, over transparent chrome. Native pickers take it from
+   there. flex-wrap on .pair absorbs the longest names */
+.pair .ccy{
+  font-family:inherit;font-size:24px;font-weight:700;letter-spacing:.06em;
+  color:var(--teal);background:none;border:none;
+  cursor:pointer;max-width:100%;
+}
+.pair.to .ccy{color:var(--plum)}
+.ccy:focus{outline:1px solid var(--teal);outline-offset:2px}
 .calc-btn{
   appearance:none;flex:0 0 auto;width:46px;
   background:rgba(6,15,12,.6);border:1px solid var(--card-edge);border-radius:9px;
@@ -168,7 +187,8 @@ header .logo{flex:0 0 auto;display:block}
   margin-top:6px;font-size:12.5px;color:var(--bad);letter-spacing:.02em;
 }
 /* quiet variant: for gentle guidance, not alarm — red stays
-   reserved for the C key and the bad status dot */
+   reserved for the divide-by-zero message, the C key and the
+   bad status dot, nothing else */
 .calc-msg.hint{color:var(--mut)}
 .out{
   margin-top:4px;font-size:30px;font-weight:600;color:var(--plum);
@@ -417,13 +437,140 @@ footer{
        to stand alone -->
   <p class="priv"><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer" style="color:var(--rose-light);text-decoration:none">Rates By Exchange Rate API</a></p>
   <p class="maint">Estimates only — use at your own risk</p>
-  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.35</span></p>
+  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.39</span></p>
   <p class="priv"><a href="https://github.com/cknightshift/fx-convert/blob/main/README.md" target="_blank" rel="noopener noreferrer">Catnip, Disclaimer &amp; Privacy Policy</a></p>
 </footer>
 
 <script>
 (function(){
 'use strict';
+
+/* ===== v10.39 — trail repair, select-settle symmetry, spoken msgs ==
+   - Version-trail repair (copy only): the v10.36 banner had gone
+     missing from the stack, leaving the custom-card work claimed by
+     both the in-code comments (v10.36) and the v10.37 banner. The
+     v10.36 banner is restored from the spec's changelog record and
+     the v10.37 banner trimmed to its own work — the reorder and the
+     removal of the fixed USD→NZD card. No code behaviour changed by
+     this part.
+   - Select-change settle symmetry (behavioural): both custom
+     selects' change handlers now clear the card's pending settle
+     timer, exactly as the swap handler has since v10.31. Typing a
+     formula then changing a currency fired the timer 1.2 s later;
+     the select lives inside the card, so v10.30's containment guard
+     passed and focus was yanked out of the select mid-interaction —
+     the same intra-card failure family the swap fix closed. The
+     typed value still carries across and the output still
+     recomputes; only the cosmetic settle rewrite waits for the next
+     edit.
+   - Spoken messages (accessibility): .calc-msg gains role="status"
+     in both card shapes, so "Cannot divide by zero" and the muted
+     hints reach screen readers — .out was already aria-live, but
+     the message channel was silent. showMsg() also unhides the
+     element before writing, so the text mutation lands in a visible
+     live region rather than resting on the unhide itself being
+     noticed.
+   - Adjudicated and declined this round, recorded for the trail:
+     Frankfurter's HTTP 422 on an unknown currency code (confirmed
+     from frankfurter.dev's own error table) would fail the whole
+     fallback rather than one leg, but the service advertises 223
+     currencies and every code the union can carry is a mainstream
+     one well inside that coverage; the failure is honest ("Rates
+     unavailable", retry invited) and changing the selection
+     rebuilds the union, so a coverage list or a retry tier would be
+     speculative machinery for an unobserved fault. from === to on
+     the custom card is left as-is: a 1:1 echo is arithmetically
+     true and either select can be changed. A browser without
+     AbortController lets a timed-out request run on; the promise
+     still rejects and the app behaves correctly, so tier zero.
+   ================================================================ */
+
+/* ===== v10.38 — maintenance sweep: honest fetch, dark UA =========
+   - Post-feature-freeze audit of v10.37: structural, security and
+     cosmetic. No new features; the app is declared complete.
+   - fetchJSON now sends cache: 'no-store'. The HTTP cache could
+     have served a stale payload under the "Live rates" label, and
+     in the offline rehearsal it could masquerade as a successful
+     fetch while the wire was down. Same keyless GETs to the same
+     two allow-listed hosts; only freshness is now guaranteed.
+   - color-scheme: dark declared on :root. The page is dark-only
+     but the UA was never told, so native control chrome — the
+     custom card's two select popups above all — could render in
+     the platform's light theme. The declaration steers popup
+     lists, scrollbars and any future form widget to the dark
+     palette.
+   - Comment hygiene: the .calc-msg.hint comment's red-reservation
+     list omitted divide-by-zero, the very message the base
+     .calc-msg rule colours red. Enumeration completed.
+   - Examined and declined this round, recorded for the trail:
+     URI-encoding the fallback quotes list (every code is an
+     internal constant, never user-composed); filtering the custom
+     menu on finiteness (a non-finite row already dies honestly at
+     computeCrossRate); merging the stacked CUSTOM_CURRENCIES
+     comments (distinct trails, no untruth); racing both sources
+     concurrently (breaks primary-first preference, doubles
+     upstream load). Frozen banners, the recorded short-viewport
+     pad limit, and the stage min-height stay untouched, per
+     convention.
+   ================================================================ */
+
+/* ===== v10.37 — custom card moved to the front ===================
+   - The custom-pairing card (built in v10.36, below) moved to the
+     carousel's first position, so it greets the user on load. The
+     former fixed USD→NZD card was removed as redundant — its pair
+     became the custom card's default. Four legacy pairs remain:
+     AUD→NZD, GBP→NZD, EUR→NZD, ZAR→NZD.
+   - Otherwise cosmetic: stale counts ("five" → "four") corrected
+     in comments and in this stack. No intermediate bump.
+   ================================================================ */
+
+/* ===== v10.36 — custom-pairing card ==============================
+   - A custom-pairing card joins the carousel: two native currency
+     selects in place of the static code spans, composing any pair
+     from a curated 22-code pool (menus read "CODE — Name", so the
+     picker teaches while it offers). Native selects buy keyboard
+     support, mobile pickers and accessibility without new
+     machinery.
+   - computeCrossRate generalizes computeRate: units-of-to per
+     unit-of-from, same quotient-of-per-base algebra. The legacy
+     cards pass (other, NZD), reducing to the previous computation
+     exactly. A source never quotes its own base, so the declared
+     base is read as 1.
+   - Sanity bounds widened 0.02-6.0 to 0.00001-100,000
+     (adjudicated): the originals were calibrated for NZD-relative
+     legs, while legitimate cross-rates span far wider (KWD/VND
+     ~84,000, JPY/IDR ~0.00012). Per-leg honesty carries the burden
+     now: a missing or non-number quote yields "Rate unavailable",
+     never a substituted figure.
+   - The custom card's rate multiplies the amount (updateOutput);
+     legacy division is untouched. Selection change and swap both
+     route through recomputeCustom before re-render, so no
+     stale-pair figure can render.
+   - Menus are cut against what the serving source actually quotes
+     (refreshCustomMenu, run before rate computation in applyRates —
+     an execution-order dependency: the rate must reflect the
+     snapped pair, not the pre-snap one). Selections survive where
+     they do; snaps go to menu[0] for the from side, NZD for the to
+     side. Known limit, recorded: under the Frankfurter fallback the
+     menu narrows to the quoted codes; an unquotable currency is
+     simply not offered.
+   - The fallback URL is built per refresh attempt (getFallbackUrl):
+     NZD + the four legacy pairs + both current custom selections,
+     deduplicated, minus the base. Exotic legs stay quotable when
+     Frankfurter serves, and the legacy codes stay in the union so
+     the hardcoded cards cannot go dark by omission.
+   - Select keydown stops ArrowLeft/Right from bubbling to the
+     stage's carousel listener (the amount input's edge-guard
+     lesson, applied to a new element that owns its arrows), and
+     touch-action:manipulation extends to .ccy per the v10.32 rule:
+     a select is a tappable control.
+   - NZD restored to CUSTOM_CURRENCIES after outside review caught
+     its absence: the array's comment claimed it belonged, the names
+     map carried it, and refreshCustomMenu's NZD snap branch was
+     unreachable without it, silently collapsing the booted USD→NZD
+     default to USD→USD on the first successful applyRates. Fixed
+     inside the same unpublished batch, no extra bump.
+   ================================================================ */
 
 /* ===== v10.32 — IME re-raise on pad close ========================
    - Closing the calculator pad re-raised the Android soft
@@ -626,23 +773,69 @@ footer{
 /* ---------------- constants ---------------- */
 const NZD = 'NZD';
 const NZD_NAME = 'New Zealand Dollar';
+/* v10.37 — USD→NZD moved to the custom card's default; the
+   hardcoded pairs now start at AUD. The custom card becomes
+   the carousel's first entry, so it greets the user on load */
 const PAIRS = [
-  ['USD','US Dollar'],
   ['AUD','Australian Dollar'],
   ['GBP','British Pound'],
   ['EUR','Euro'],
   ['ZAR','South African Rand']
 ];
 const SETTLE_MS = 1200;
-const BOUND_LO = 0.02, BOUND_HI = 6.0;
+/* v10.36 — bounds widened for cross-rate pairs (adjudicated this
+   round). The originals (0.02-6.0) were calibrated for NZD-relative
+   legs among the four hardcoded pairs; arbitrary cross-rates
+   legitimately span far wider ranges (KWD/VND ~84,000, JPY/IDR
+   ~0.00012). The new range (0.00001-100,000) covers every
+   legitimate pair while still catching catastrophic API garbage.
+   Per-leg honesty is unchanged: a missing or non-number quote still
+   yields "Rate unavailable", never a substituted figure. Applies to
+   the four legacy cards too; no legitimate NZD pair ever sat near
+   the old ceiling anyway */
+const BOUND_LO = 0.00001, BOUND_HI = 100000;
 const PRIMARY_URL  = 'https://open.er-api.com/v6/latest/USD';
 const FALLBACK_BASE = 'EUR';
-/* v2 quotes exactly what the carousel needs — NZD plus every paired
-   currency except the base itself; computeRate reads the base as 1 */
-const FALLBACK_URL = 'https://api.frankfurter.dev/v2/rates?base=' + FALLBACK_BASE +
-  '&quotes=NZD,' + PAIRS.map(p => p[0]).filter(c => c !== FALLBACK_BASE).join(',');
+/* v10.36 — the fallback URL is now built per refresh attempt, so it
+   can carry the custom card's current selections alongside the four
+   legacy pairs. Quoting set: NZD + every PAIRS code + both custom
+   selections, deduplicated, minus the base itself (a source never
+   quotes its own base; computeCrossRate reads it as 1). Without the
+   custom legs here, an exotic selection would go dark whenever the
+   fallback served — and without the legacy codes, so would the four
+   hardcoded cards, which is why they stay in the union */
+function getFallbackUrl(fromCcy, toCcy){
+  const wanted = new Set([NZD].concat(PAIRS.map(p => p[0])));
+  if (fromCcy) wanted.add(fromCcy);
+  if (toCcy) wanted.add(toCcy);
+  wanted.delete(FALLBACK_BASE);
+  return 'https://api.frankfurter.dev/v2/rates?base=' + FALLBACK_BASE +
+    '&quotes=' + Array.from(wanted).join(',');
+}
 const PRIMARY_MS = 12000, FALLBACK_MS = 8000;
 const NUM = /[0-9.]/;
+/* v10.36 — curated pool for the custom-pairing card's two menus.
+   The primary source quotes ~160 codes; a 160-option native select
+   is hostile on a phone, so the menus offer this curated subset
+   instead, intersected with whatever the serving source actually
+   quotes (refreshCustomMenu does that cut at applyRates time).
+   NZD belongs here: it is a valid leg of a custom pair */
+/* NZD rides at the tail: the pool's 22nd code, restored after outside
+   review caught its absence — the comment claimed it belonged here,
+   CURRENCY_NAMES already carried its name, and refreshCustomMenu's
+   NZD snap branch was unreachable without it, silently snapping
+   the booted USD→NZD default to USD→USD on the first successful
+   applyRates (the maintainer's original field report, misdiagnosed
+   as transient at first) */
+const CUSTOM_CURRENCIES = ['USD','AUD','GBP','EUR','ZAR','CAD','CHF','JPY','CNY','HKD','SGD','INR','KRW','MXN','SEK','NOK','DKK','PLN','THB','MYR','IDR','NZD'];
+const CURRENCY_NAMES = {
+  USD:'US Dollar', AUD:'Australian Dollar', GBP:'British Pound', EUR:'Euro',
+  ZAR:'South African Rand', CAD:'Canadian Dollar', CHF:'Swiss Franc', JPY:'Japanese Yen',
+  CNY:'Chinese Yuan', HKD:'Hong Kong Dollar', SGD:'Singapore Dollar', INR:'Indian Rupee',
+  KRW:'South Korean Won', MXN:'Mexican Peso', SEK:'Swedish Krona', NOK:'Norwegian Krone',
+  DKK:'Danish Krone', PLN:'Polish Zloty', THB:'Thai Baht', MYR:'Malaysian Ringgit',
+  IDR:'Indonesian Rupiah', NZD:'New Zealand Dollar'
+};
 
 const stage      = document.getElementById('stage');
 const updBtn     = document.getElementById('updbtn');
@@ -825,35 +1018,78 @@ const CARD_SVG_CALC =
     '<circle cx="13.5" cy="14.5" r="1" fill="currentColor"/>' +
   '</svg>';
 
-function buildCard(pair){
-  const other = pair[0], name = pair[1];
+function buildCard(pair, opts){
+  /* v10.36 — opts is optional. Absent: the legacy [code, name] pair.
+     Present with opts.custom: the custom-pairing card, whose two
+     currencies arrive as fromCcy/toCcy and live in native selects
+     rather than static spans. Native selects buy keyboard support,
+     mobile pickers and accessibility without new machinery */
+  const isCustom = !!(opts && opts.custom);
+  const other = isCustom ? null : pair[0];
+  const name  = isCustom ? null : pair[1];
+  const fromCcy = isCustom ? (opts.fromCcy || 'USD') : null;
+  const toCcy   = isCustom ? (opts.toCcy   || 'NZD') : null;
+
   const el = document.createElement('article');
   el.className = 'card';
-  el.innerHTML =
-    '<div class="pair from"><span class="code"></span><span class="name"></span></div>' +
-    '<button class="swap" type="button" aria-label="Reverse direction">\u21c4</button>' +
-    '<div class="pair to"><span class="code"></span><span class="name"></span></div>' +
-    '<div class="io">' +
-      '<div class="lbl lbl-in"></div>' +
-      '<div class="inrow">' +
-        '<input class="amt" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="0" aria-label="Amount">' +
-        '<button class="calc-btn" type="button" aria-label="Calculator">' + CARD_SVG_CALC + '</button>' +
-      '</div>' +
-      '<div class="calc-msg" hidden></div>' +
-      '<div class="lbl lbl-out" style="margin-top:14px"></div>' +
-      '<div class="out" aria-live="polite"></div>' +
+
+  /* the shared io block; the custom card inserts the same labels,
+     with spans the render pass fills — the whole-sale textContent
+     writes of the legacy path would destroy them */
+  /* v10.39 — the message div is a live region in both card shapes:
+     without role="status" a screen reader never hears "Cannot divide
+     by zero" or the quieter hints, though .out was already aria-live */
+  const ioMarkup =
+    '<div class="lbl lbl-in"></div>' +
+    '<div class="inrow">' +
+      '<input class="amt" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="0" aria-label="Amount">' +
+      '<button class="calc-btn" type="button" aria-label="Calculator">' + CARD_SVG_CALC + '</button>' +
     '</div>' +
-    '<div class="pop-slot"></div>';
+    '<div class="calc-msg" role="status" hidden></div>' +
+    '<div class="lbl lbl-out" style="margin-top:14px"></div>' +
+    '<div class="out" aria-live="polite"></div>';
+
+  if (isCustom){
+    el.innerHTML =
+      '<div class="pair from"><select class="ccy from-ccy" aria-label="From currency"></select></div>' +
+      '<button class="swap" type="button" aria-label="Reverse direction">\u21c4</button>' +
+      '<div class="pair to"><select class="ccy to-ccy" aria-label="To currency"></select></div>' +
+      '<div class="io">' +
+        '<div class="lbl lbl-in">Amount in <span class="x-display"></span></div>' +
+        '<div class="inrow">' +
+          '<input class="amt" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="0" aria-label="Amount">' +
+          '<button class="calc-btn" type="button" aria-label="Calculator">' + CARD_SVG_CALC + '</button>' +
+        '</div>' +
+        '<div class="calc-msg" role="status" hidden></div>' +
+        '<div class="lbl lbl-out" style="margin-top:14px">Converted to <span class="y-display"></span></div>' +
+        '<div class="out" aria-live="polite"></div>' +
+      '</div>' +
+      '<div class="pop-slot"></div>';
+  } else {
+    el.innerHTML =
+      '<div class="pair from"><span class="code"></span><span class="name"></span></div>' +
+      '<button class="swap" type="button" aria-label="Reverse direction">\u21c4</button>' +
+      '<div class="pair to"><span class="code"></span><span class="name"></span></div>' +
+      '<div class="io">' + ioMarkup + '</div>' +
+      '<div class="pop-slot"></div>';
+  }
 
   const card = {
-    el, other, otherName: name,
-    dir: 'otherToNzd',     /* source currency is the non-NZD leg */
-    rate: null,            /* NZD per 1 unit of other currency */
+    el,
+    custom: isCustom,      /* v10.36 — gates the custom code paths */
+    other, otherName: name,
+    dir: isCustom ? null : 'otherToNzd',  /* source currency is the non-NZD leg */
+    rate: null,            /* custom: units of to per from; legacy: NZD per other */
     timer: null,
-    fromCode: el.querySelector('.pair.from .code'),
-    fromName: el.querySelector('.pair.from .name'),
-    toCode:   el.querySelector('.pair.to .code'),
-    toName:   el.querySelector('.pair.to .name'),
+    fromCcy, toCcy,
+    fromSel:  isCustom ? el.querySelector('.from-ccy') : null,
+    toSel:    isCustom ? el.querySelector('.to-ccy') : null,
+    xDisplay: isCustom ? el.querySelector('.x-display') : null,
+    yDisplay: isCustom ? el.querySelector('.y-display') : null,
+    fromCode: isCustom ? null : el.querySelector('.pair.from .code'),
+    fromName: isCustom ? null : el.querySelector('.pair.from .name'),
+    toCode:   isCustom ? null : el.querySelector('.pair.to .code'),
+    toName:   isCustom ? null : el.querySelector('.pair.to .name'),
     lblIn:    el.querySelector('.lbl-in'),
     lblOut:   el.querySelector('.lbl-out'),
     amt:      el.querySelector('.amt'),
@@ -862,6 +1098,13 @@ function buildCard(pair){
     calcBtn:  el.querySelector('.calc-btn'),
     popSlot:  el.querySelector('.pop-slot')
   };
+
+  /* provisional menus so the card is usable the moment it paints;
+     applyRates re-cuts them against what the winning source quotes */
+  if (isCustom){
+    fillCcySelect(card.fromSel, CUSTOM_CURRENCIES, fromCcy);
+    fillCcySelect(card.toSel, CUSTOM_CURRENCIES, toCcy);
+  }
 
   el.querySelector('.swap').addEventListener('click', () => {
     closePop(); /* the pad closes on swap, per spec */
@@ -872,10 +1115,57 @@ function buildCard(pair){
        updateOutput computes from the raw text, so only the cosmetic
        settle rewrite waits for the next edit */
     if (card.timer){ clearTimeout(card.timer); card.timer = null; }
-    card.dir = (card.dir === 'otherToNzd') ? 'nzdToOther' : 'otherToNzd';
+    if (card.custom){
+      /* v10.36 — the custom card's swap trades the two selections;
+         the rate must be recomputed here, not left at the previous
+         pair's figure */
+      const tmp = card.fromCcy;
+      card.fromCcy = card.toCcy;
+      card.toCcy = tmp;
+      recomputeCustom(card);
+    } else {
+      card.dir = (card.dir === 'otherToNzd') ? 'nzdToOther' : 'otherToNzd';
+    }
     render(card);
     updateOutput(card); /* typed value carries across */
   });
+
+  if (isCustom){
+    /* v10.36 — a selection change recomputes the rate immediately.
+       Menus only offer currencies the serving source quotes, so no
+       refresh-on-change dance is needed: an unquotable currency
+       simply isn't on the menu */
+    /* v10.39 — and it clears the card's pending settle timer, as the
+       swap handler has since v10.31: the select lives inside the
+       card, so v10.30's containment guard passes and the timer used
+       to yank focus out of the select 1.2 s after the change. The
+       typed value still carries across and the output still
+       recomputes; only the cosmetic settle rewrite waits */
+    card.fromSel.addEventListener('change', () => {
+      if (card.timer){ clearTimeout(card.timer); card.timer = null; }
+      card.fromCcy = card.fromSel.value;
+      recomputeCustom(card);
+      render(card);
+      updateOutput(card);
+    });
+    card.toSel.addEventListener('change', () => {
+      if (card.timer){ clearTimeout(card.timer); card.timer = null; }
+      card.toCcy = card.toSel.value;
+      recomputeCustom(card);
+      render(card);
+      updateOutput(card);
+    });
+    /* ArrowLeft/Right inside a select change the selection natively,
+       and the keydown would otherwise bubble to the stage's carousel
+       listener and slide the stage mid-selection — the same leak the
+       amount input guards against at its text edges, closed here
+       for the selects wholesale */
+    const stopStageArrows = e => {
+      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') e.stopPropagation();
+    };
+    card.fromSel.addEventListener('keydown', stopStageArrows);
+    card.toSel.addEventListener('keydown', stopStageArrows);
+  }
 
   card.amt.addEventListener('input', () => { onAmountInput(card); });
   card.amt.addEventListener('keydown', e => {
@@ -908,6 +1198,18 @@ function buildCard(pair){
 
 /* draw direction: codes, names, labels, accessible name */
 function render(card){
+  if (card.custom){
+    /* v10.36 — the custom card draws from its two selections. The
+       labels are set via their inner spans only: lblIn.textContent
+       would destroy the span the next pass tries to fill */
+    card.xDisplay.textContent = card.fromCcy;
+    card.yDisplay.textContent = card.toCcy;
+    card.fromSel.value = card.fromCcy;
+    card.toSel.value = card.toCcy;
+    card.amt.setAttribute('aria-label', 'Amount in ' + card.fromCcy);
+    card.el.setAttribute('aria-label', card.fromCcy + ' to ' + card.toCcy);
+    return;
+  }
   if (card.dir === 'otherToNzd'){
     card.fromCode.textContent = card.other;  card.fromName.textContent = card.otherName;
     card.toCode.textContent = NZD;           card.toName.textContent = NZD_NAME;
@@ -953,7 +1255,12 @@ function updateOutput(card){
     }
     return ev;
   }
-  const conv = (card.dir === 'otherToNzd') ? ev.value * card.rate : ev.value / card.rate;
+  /* v10.36 — the custom card's rate is units-of-to per unit-of-from,
+     so it always multiplies; legacy cards store NZD-per-other and
+     divide when the direction flips. Getting this backwards inverts
+     every custom conversion */
+  const conv = card.custom ? ev.value * card.rate
+    : (card.dir === 'otherToNzd') ? ev.value * card.rate : ev.value / card.rate;
   /* finite results at or above 1e21 are computable but display-hostile:
      a wall of digits grows the card and shoves the calculator pad past
      the stage's overflow:hidden edge. 1e21 is where JS itself abandons
@@ -967,9 +1274,12 @@ function updateOutput(card){
 }
 
 function showMsg(card, text, kind){
-  card.msg.textContent = text;
-  card.msg.className = 'calc-msg' + (kind ? ' ' + kind : '');
+  /* v10.39 — unhide before writing: the message div is a live region
+     (role="status"), and the text mutation should land in a visible
+     region rather than resting on the unhide itself being announced */
   card.msg.hidden = false;
+  card.msg.className = 'calc-msg' + (kind ? ' ' + kind : '');
+  card.msg.textContent = text;
 }
 function hideMsg(card){ card.msg.hidden = true; card.msg.textContent = ''; }
 
@@ -1180,7 +1490,12 @@ function fetchJSON(url, timeoutMs){
       clearTimeout(timer);
       fn(arg);
     }
-    fetch(url, ctl ? {signal: ctl.signal} : undefined)
+    /* v10.38 — no-store keeps the "Live rates" label honest: the
+       HTTP cache could otherwise serve a stale response as fresh,
+       and it would mask the offline rehearsal's expected failure.
+       Same two allow-listed hosts, same keyless GETs; only
+       freshness is asserted */
+    fetch(url, ctl ? {signal: ctl.signal, cache: 'no-store'} : {cache: 'no-store'})
       .then(r => {
         if (!r.ok) throw new Error('HTTP ' + r.status);
         return r.json();
@@ -1200,32 +1515,86 @@ function looksLikeFrankV2(j){
   );
 }
 
-/* NZD per 1 unit of `other`, via quotient-of-per-base rates; null if unavailable */
-function computeRate(rates, base, other){
+/* v10.36 — generalized cross-rate: units of `to` per unit of `from`,
+   via the same quotient-of-per-base algebra the NZD-specific form
+   used (legacy cards pass (other, NZD), which reduces to exactly
+   the old computation). Null when either leg is unquotable or the
+   ratio falls outside the sanity bounds — never a substituted
+   figure */
+function computeCrossRate(rates, base, from, to){
   /* a source never quotes its own base currency, so read the declared
      base as 1; without this, EUR/NZD went dark whenever the EUR-based
      Frankfurter fallback served the rates */
-  const n = (base === NZD) ? 1 : rates[NZD];
-  const o = (other === base) ? 1 : rates[other];
-  if (typeof n !== 'number' || typeof o !== 'number'){
-    console.warn('[FX Convert] ' + other + '/' + NZD + ': source ' + base + ' is missing a quote for the pair (NZD=' + n + ', ' + other + '=' + o + '); marking pair unavailable.');
+  const f = (from === base) ? 1 : rates[from];
+  const t = (to === base) ? 1 : rates[to];
+  if (typeof f !== 'number' || typeof t !== 'number'){
+    console.warn('[FX Convert] ' + from + '/' + to + ': source ' + base + ' is missing a quote for the pair (' + from + '=' + f + ', ' + to + '=' + t + '); marking pair unavailable.');
     return null;
   }
-  const nzdPerOther = n / o;
-  if (!(nzdPerOther >= BOUND_LO && nzdPerOther <= BOUND_HI)){
-    console.warn('[FX Convert] ' + other + '/' + NZD + ' = ' + nzdPerOther.toFixed(6) + ' falls outside sanity bounds ' + BOUND_LO + '\u2013' + BOUND_HI + '; marking pair unavailable rather than substituting a value.');
+  const rate = t / f;
+  if (!(rate >= BOUND_LO && rate <= BOUND_HI)){
+    console.warn('[FX Convert] ' + from + '/' + to + ' = ' + rate.toFixed(6) + ' falls outside sanity bounds ' + BOUND_LO + '\u2013' + BOUND_HI + '; marking pair unavailable.');
     return null;
   }
-  return nzdPerOther;
+  return rate;
 }
 
 function applyRates(rates, base, label, when){
   state = {base, rates, label};
+  /* the menu rebuild runs first: it may snap the custom card's
+     selections to codes the source actually quotes, and the rate
+     computed below must reflect the snapped pair, not the pre-snap
+     one. Placement against real execution order, per the
+     cautionary trail */
+  refreshCustomMenu(rates, base);
   cards.forEach(card => {
-    card.rate = computeRate(rates, base, card.other);
+    card.rate = card.custom
+      ? computeCrossRate(rates, base, card.fromCcy, card.toCcy)
+      : computeCrossRate(rates, base, card.other, NZD);
     updateOutput(card);
   });
   setStatus('Live rates via ' + label + ' \u00b7 ' + hhmm(when), 'live');
+}
+
+/* v10.36 — rebuild the custom card's two menus against what this
+   source actually quotes (the curated pool, intersected), preserving
+   current selections where they survive and snapping to sensible
+   defaults where they don't. Under the primary this is the full
+   curated set; under the fallback it narrows to the quoted codes —
+   a recorded known limit, honest rather than broken: an unquotable
+   currency simply isn't offered */
+function refreshCustomMenu(rates, base){
+  const c = cards.find(k => k.custom);
+  if (!c || !c.fromSel || !c.toSel) return;
+  const menu = CUSTOM_CURRENCIES.filter(code =>
+    code === base || typeof rates[code] === 'number');
+  if (!menu.length) return;
+  if (!menu.includes(c.fromCcy)) c.fromCcy = menu[0];
+  if (!menu.includes(c.toCcy)) c.toCcy = menu.includes(NZD) ? NZD : menu[0];
+  fillCcySelect(c.fromSel, menu, c.fromCcy);
+  fillCcySelect(c.toSel, menu, c.toCcy);
+  render(c);
+}
+
+/* v10.36 — fill one currency select from a code list, showing
+   "CODE — Name" so the picker teaches while it offers */
+function fillCcySelect(sel, menu, val){
+  sel.innerHTML = '';
+  menu.forEach(code => {
+    const opt = document.createElement('option');
+    opt.value = code;
+    opt.textContent = code + ' \u2014 ' + (CURRENCY_NAMES[code] || code);
+    sel.appendChild(opt);
+  });
+  sel.value = val;
+}
+
+/* v10.36 — recompute the custom card's rate from the live state.
+   card.rate only refreshes in applyRates otherwise, so selection
+   changes and swaps would have displayed the previous pair's
+   figure */
+function recomputeCustom(card){
+  card.rate = state ? computeCrossRate(state.rates, state.base, card.fromCcy, card.toCcy) : null;
 }
 
 function failAll(reason){
@@ -1245,6 +1614,15 @@ function refreshRates(){
   updBtn.textContent = 'Updating\u2026';
   setStatus('Fetching live rates\u2026', 'busy');
 
+  /* v10.36 — the fallback URL carries the custom card's current
+     selections alongside the legacy pairs, so exotic legs stay
+     quotable when Frankfurter serves. Built once per attempt from
+     the selections as they stand when the refresh begins */
+  const custom = cards.find(c => c.custom);
+  const dynFallbackUrl = getFallbackUrl(
+    custom && custom.fromSel ? custom.fromSel.value : null,
+    custom && custom.toSel ? custom.toSel.value : null);
+
   fetchJSON(PRIMARY_URL, PRIMARY_MS)
     .then(j => {
       if (!looksLikeErApi(j)) throw new Error('primary response malformed');
@@ -1252,7 +1630,7 @@ function refreshRates(){
     })
     .catch(err => {
       console.warn('[FX Convert] Primary source (open.er-api.com) failed: ' + err.message);
-      return fetchJSON(FALLBACK_URL, FALLBACK_MS).then(j2 => {
+      return fetchJSON(dynFallbackUrl, FALLBACK_MS).then(j2 => {
         if (!looksLikeFrankV2(j2)) throw new Error('fallback response malformed');
         /* every row must declare the same base, and it must be the base
            we asked for: a deviation breaks the request's contract (EUR
@@ -1284,6 +1662,14 @@ function refreshRates(){
 updBtn.addEventListener('click', refreshRates);
 
 /* ---------------- boot ---------------- */
+/* v10.37 — custom card leads the carousel, so it greets the user
+   on load. The fixed USD→NZD pair is now its default, making that
+   hardcoded card redundant. Four legacy pairs follow */
+const customCard = buildCard(null, {custom: true, fromCcy: 'USD', toCcy: NZD});
+cards.push(customCard);
+render(customCard);
+stage.insertBefore(customCard.el, document.getElementById('nextBtn'));
+
 PAIRS.forEach(p => {
   const card = buildCard(p);
   cards.push(card);
