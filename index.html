@@ -437,13 +437,67 @@ footer{
        to stand alone -->
   <p class="priv"><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer" style="color:var(--rose-light);text-decoration:none">Rates By Exchange Rate API</a></p>
   <p class="maint">Estimates only — use at your own risk</p>
-  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.39</span></p>
+  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.41</span></p>
   <p class="priv"><a href="https://github.com/cknightshift/fx-convert/blob/main/README.md" target="_blank" rel="noopener noreferrer">Catnip, Disclaimer &amp; Privacy Policy</a></p>
 </footer>
 
 <script>
 (function(){
 'use strict';
+
+/* ===== v10.41 — paste-length cap sized to the honest ceiling =====
+   - Outside review flagged the amount field's missing input-length
+     limit: a megabyte paste parses into roughly one token object per
+     character or two, and millions of small objects are real memory
+     pressure on a phone. The narrower claims are overstated — the
+     tokenizer and parser are linear (no backtracking regexes;
+     parseExpr and parseTerm iterate), a pasted wall of minus signs
+     already dies fast in parseFactor's RangeError (logged since
+     v10.31), and an oversized number dies honestly at the
+     parseFloat/isFinite check. But the token-array buildup on a
+     single hostile paste is worth guarding, and the smallest tier
+     suffices: one maxlength attribute, no script machinery.
+   - The review's suggested 50-character cap is declined: ritual item
+     6 settles a 60-digit literal to full plain digits, and fmtPlain's
+     BigInt path legitimately writes up to ~309 plain digits plus
+     sign (a settled DBL_MAX-scale value expanded exactly) — the
+     input/output asymmetry is deliberate and the settle round-trip
+     is non-negotiable (anything the app writes must re-parse; HTML
+     value sanitization truncates programmatic assignment to
+     maxlength too, so a low cap would corrupt the app's own settle).
+     The cap is therefore sized to the app's own maximum write:
+     320 — 309 digits + sign + headroom. The 40-digit display-bound
+     ritual, the 60-digit huge settle and the astronomical plain-
+     digit settle all fit; hostile pastes do not.
+   - Record: at the cap, a pad-operator insert is dropped by UA
+     truncation — reachable only at pathological lengths, accepted.
+     Both card shapes carry the attribute: the legacy cards' shared
+     ioMarkup and the custom card's own input block.
+   ================================================================ */
+
+/* ===== v10.40 — custom menus: featured head, kitty separator ====
+   - The custom card's currency lists carried no design order: four
+     legacy codes, then majors, NZD riding the tail purely because
+     that is where the v10.36 restoration inserted it. The menus now
+     open with the featured pairs — the custom card's own USD→NZD
+     default, then the four legacy legs — derived from PAIRS so the
+     menu head and the carousel cannot drift apart.
+   - Behind them, a disabled, valueless "here kitty kitty" option
+     drawn by fillCcySelect separates the head from the rest, which
+     follows alphabetical order of country NAME rather than code
+     ("Chinese Yuan" ahead of "Danish Krone"; "Swedish Krona" ahead
+     of "Swiss Franc"). The separator is placed before the first
+     non-featured code and only when both sides of it survive the
+     source-driven menu cut; disabled keeps it unpickable and
+     skipped by keyboard navigation, and sel.value matches codes,
+     so the selection can never land on it.
+   - The head is not only presentation: refreshCustomMenu snaps an
+     unquotable from-selection to menu[0], and USD has opened the
+     pool since v10.36's first issuance, so the snap is preserved
+     exactly. NZD moves from the tail into the head; its presence
+     still guards the v10.36 lesson (the NZD snap branch dies
+     without it).
+   ================================================================ */
 
 /* ===== v10.39 — trail repair, select-settle symmetry, spoken msgs ==
    - Version-trail repair (copy only): the v10.36 banner had gone
@@ -820,14 +874,26 @@ const NUM = /[0-9.]/;
    instead, intersected with whatever the serving source actually
    quotes (refreshCustomMenu does that cut at applyRates time).
    NZD belongs here: it is a valid leg of a custom pair */
-/* NZD rides at the tail: the pool's 22nd code, restored after outside
-   review caught its absence — the comment claimed it belonged here,
-   CURRENCY_NAMES already carried its name, and refreshCustomMenu's
-   NZD snap branch was unreachable without it, silently snapping
-   the booted USD→NZD default to USD→USD on the first successful
-   applyRates (the maintainer's original field report, misdiagnosed
-   as transient at first) */
-const CUSTOM_CURRENCIES = ['USD','AUD','GBP','EUR','ZAR','CAD','CHF','JPY','CNY','HKD','SGD','INR','KRW','MXN','SEK','NOK','DKK','PLN','THB','MYR','IDR','NZD'];
+/* v10.40 — featured head: the custom card's USD→NZD default plus the
+   four legacy legs, derived from PAIRS so the menu head and the
+   carousel can never drift apart. The head is not only presentation:
+   refreshCustomMenu snaps an unquotable from-selection to menu[0],
+   and USD has opened the pool since v10.36's first issuance, so
+   leading with USD preserves that snap exactly. NZD formerly rode
+   the tail — no order was intended by it, only the v10.36
+   restoration's insertion point; it now sits second in the head,
+   and its presence still guards the v10.36 lesson: the NZD snap
+   branch in refreshCustomMenu dies without it */
+const FEATURED_CURRENCIES = ['USD', NZD].concat(PAIRS.map(p => p[0]));
+/* v10.40 — the remainder, alphabetical by country NAME rather than
+   code ("Chinese Yuan" ahead of "Danish Krone"; "Swedish Krona"
+   ahead of "Swiss Franc"). Keep this ordering when a code joins
+   the pool. fillCcySelect separates the two groups with a
+   disabled "here kitty kitty" option */
+const CUSTOM_CURRENCIES = FEATURED_CURRENCIES.concat([
+  'CAD','CNY','DKK','HKD','INR','IDR','JPY','MYR','MXN',
+  'NOK','PLN','SGD','KRW','SEK','CHF','THB'
+]);
 const CURRENCY_NAMES = {
   USD:'US Dollar', AUD:'Australian Dollar', GBP:'British Pound', EUR:'Euro',
   ZAR:'South African Rand', CAD:'Canadian Dollar', CHF:'Swiss Franc', JPY:'Japanese Yen',
@@ -1042,7 +1108,10 @@ function buildCard(pair, opts){
   const ioMarkup =
     '<div class="lbl lbl-in"></div>' +
     '<div class="inrow">' +
-      '<input class="amt" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="0" aria-label="Amount">' +
+      /* v10.41 — paste cap sized for fmtPlain's largest honest write:
+         ~309 plain digits (DBL_MAX via BigInt) plus sign, headroom
+         above that. Below it nothing; hostile pastes clamp here */
+      '<input class="amt" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" maxlength="320" placeholder="0" aria-label="Amount">' +
       '<button class="calc-btn" type="button" aria-label="Calculator">' + CARD_SVG_CALC + '</button>' +
     '</div>' +
     '<div class="calc-msg" role="status" hidden></div>' +
@@ -1057,7 +1126,9 @@ function buildCard(pair, opts){
       '<div class="io">' +
         '<div class="lbl lbl-in">Amount in <span class="x-display"></span></div>' +
         '<div class="inrow">' +
-          '<input class="amt" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" placeholder="0" aria-label="Amount">' +
+          /* same v10.41 paste cap as the ioMarkup input above, and for
+             the same reason — the custom card sets its own markup */
+          '<input class="amt" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" maxlength="320" placeholder="0" aria-label="Amount">' +
           '<button class="calc-btn" type="button" aria-label="Calculator">' + CARD_SVG_CALC + '</button>' +
         '</div>' +
         '<div class="calc-msg" role="status" hidden></div>' +
@@ -1578,9 +1649,26 @@ function refreshCustomMenu(rates, base){
 
 /* v10.36 — fill one currency select from a code list, showing
    "CODE — Name" so the picker teaches while it offers */
+/* v10.40 — one disabled, valueless "here kitty kitty" option
+   separates the featured pairs from the alphabetical remainder:
+   drawn before the first code outside the featured set, and only
+   when both sides of it survive the menu cut — a separator pinned
+   to the top or tail of a cut menu is clutter, not structure (the
+   filter in refreshCustomMenu preserves the pool's featured-first
+   order, so the head is always a prefix). Disabled keeps it
+   unpickable and skipped by keyboard navigation, and the value
+   assignment below matches codes, so the selection can never land
+   on it (a disabled option is never matched) */
 function fillCcySelect(sel, menu, val){
   sel.innerHTML = '';
-  menu.forEach(code => {
+  const restStart = menu.findIndex(code => !FEATURED_CURRENCIES.includes(code));
+  menu.forEach((code, i) => {
+    if (i === restStart && restStart > 0){
+      const sep = document.createElement('option');
+      sep.disabled = true;
+      sep.textContent = 'here kitty kitty';
+      sel.appendChild(sep);
+    }
     const opt = document.createElement('option');
     opt.value = code;
     opt.textContent = code + ' \u2014 ' + (CURRENCY_NAMES[code] || code);
