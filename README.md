@@ -25,13 +25,7 @@ This web app will not convert 'meows' for you. It **converts currencies** — on
 | New Zealand Dollar ↔ Euro |
 | New Zealand Dollar ↔ South African Rand |
 
-**Plus one custom card** — pick any two of these 22 currencies and
-the cat converts between them on demand: New Zealand Dollar, US
-Dollar, Australian Dollar, British Pound, Euro, South African
-Rand, Canadian Dollar, Swiss Franc, Japanese Yen, Chinese Yuan,
-Hong Kong Dollar, Singapore Dollar, Indian Rupee, South Korean
-Won, Mexican Peso, Swedish Krona, Norwegian Krone, Danish Krone,
-Polish Zloty, Thai Baht, Malaysian Ringgit, Indonesian Rupiah.
+**Plus one custom card** — pick any two of these 22 currencies and the cat converts between them on demand: US Dollar, New Zealand Dollar, Australian Dollar, British Pound, Euro, South African Rand, Canadian Dollar, Chinese Yuan, Danish Krone, Hong Kong Dollar, Indian Rupee, Indonesian Rupiah, Japanese Yen, Malaysian Ringgit, Mexican Peso, Norwegian Krone, Polish Zloty, Singapore Dollar, South Korean Won, Swedish Krona, Swiss Franc, Thai Baht.
 
 Any combination you like, even the pairs nobody asked for. This cat
 isn't fussy about *your* choices — that's your blanket.
