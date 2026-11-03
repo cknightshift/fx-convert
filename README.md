@@ -16,15 +16,25 @@ This web app will not convert 'meows' for you. It **converts currencies** — on
 
 ## What It Actually Converts
 
-**Conversions between these currency pairs:**
+**Pre-set cards**, fussed over in advance:
 
 | Purrfect Pairs |
 |------|
-| New Zealand Dollar ↔ US Dollar |
 | New Zealand Dollar ↔ Australian Dollar |
 | New Zealand Dollar ↔ British Pound |
 | New Zealand Dollar ↔ Euro |
 | New Zealand Dollar ↔ South African Rand |
+
+**Plus one custom card** — pick any two of these 22 currencies and
+the cat converts between them on demand: New Zealand Dollar, US
+Dollar, Australian Dollar, British Pound, Euro, South African
+Rand, Canadian Dollar, Swiss Franc, Japanese Yen, Chinese Yuan,
+Hong Kong Dollar, Singapore Dollar, Indian Rupee, South Korean
+Won, Mexican Peso, Swedish Krona, Norwegian Krone, Danish Krone,
+Polish Zloty, Thai Baht, Malaysian Ringgit, Indonesian Rupiah.
+
+Any combination you like, even the pairs nobody asked for. This cat
+isn't fussy about *your* choices — that's your blanket.
 
 Note: rate data is updated once every 24 hours.
 
@@ -40,7 +50,7 @@ This is a hobby project, intended for this cat's personal use only — a toy mou
 
 ### What Actually Happens
 
-Your typed amount and chosen currency never leave your device. This is not merely a promise — it's a commitment scratched into FX Convert's code. 🐾
+Your typed amount never leaves your device. This is not merely a promise — it's a commitment scratched into FX Convert's code. 🐾
 
 The web app downloads current rates when the page loads, and again whenever you tap 'Update Rates'.
 
@@ -57,7 +67,7 @@ Everything you type lives only in your browser's memory. Close the tab and it's 
 These parties are involved in serving this web app:
 
 - **GitHub web host** — as with any website, your device's IP address is received as part of serving the page.
-- **Currency rate servers** (`open.er-api.com`, `api.frankfurter.dev`) — the web app sends the same fixed rate request that every visitor triggers, so nothing you type travels with it. As with any website, these servers receive your device's IP address as part of serving the request.
+- **Currency rate servers** (`open.er-api.com`, `api.frankfurter.dev`) — the web app sends only rate requests, built from the currency pair showing on screen; nothing you type travels with it. As with any website, these servers receive your device's IP address as part of serving the request.
 - **You and your device** — everything you type. The arithmetic happens right there, locally on your device, for your eyes only.
 
 ---
