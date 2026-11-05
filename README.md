@@ -2,7 +2,9 @@
 ## The Fussy Currency Converter
 
 *Read Me, Disclaimer & Privacy Policy*  
-Last updated: 3 November 2026  
+Last updated: 5 November 2026
+
+https://convert.fussycat.app/
 
 ---
 
@@ -10,7 +12,7 @@ Last updated: 3 November 2026
 
 *(Cat language, converted…)*
 
-This web app will not convert 'meows' for you. It **converts currencies** — only a curated few, in fact, chosen fussily, like a cat picking the one blanket in the house that suits it best. The list is short. But the cat is happy. Purr.
+This web app will not convert 'meows' for you. It **converts currencies** — only a curated few, in fact, chosen fussily, like a cat picking the one blanket in the house that suits it best. The list is short. But the cat is happy. *Purr*.
 
 ---
 
@@ -37,7 +39,7 @@ Note: rate data is updated once every 24 hours.
 
 ## The ~~Nine Lives~~ Disclaimer
 
-This is a hobby project, intended for this cat's personal use only — a toy mouse, not a financial advisor. Rates arrive from respectable sources, and the cat converts them faithfully — meticulously even. But markets move faster than a cat avoiding a bath, so accuracy is served as is. This cat has nine lives, every one of them spoken for, mostly by naps on the good chair. **Use at your own risk**.
+This is a hobby project, intended for this cat's personal use only — a toy mouse, not a financial advisor. Rates arrive from respectable sources, and the cat converts them faithfully — meticulously, even. But markets move faster than a cat avoiding a bath, so accuracy is served as-is. This cat has nine lives, every one of them spoken for, mostly by naps on the good chair. **Use at your own risk**.
 
 ---
 
@@ -74,6 +76,6 @@ This cat doesn't hunt its own rates. Fresh figures are served from two public se
 
 Both run on kindness, open data, and zero API keys.
 
-[FX Convert](https://cknightshift.github.io/fx-convert/) is maintained by [cknightshift](https://github.com/cknightshift).
+[FX Convert](https://convert.fussycat.app/) is maintained by [cknightshift](https://github.com/cknightshift).
 
 *Meow*.
