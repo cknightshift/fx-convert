@@ -4,8 +4,29 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>FX Convert ⇄ Currency</title>
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src https://open.er-api.com https://api.frankfurter.dev; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src https://open.er-api.com https://api.frankfurter.dev; img-src data:; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
+<!-- v10.43 — favicon cut from the header logo's own geometry (ears,
+     lens shield, nose, grin), embedded as an SVG data URI so the
+     single-file posture holds: no external asset, no request. img-src
+     data: in the CSP above is the one allowance this needs -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M12 24L10 6L26 14Z' fill='%232bb89c'/><path d='M52 24L54 6L38 14Z' fill='%232bb89c'/><path d='M14.5 19.5L13.5 10L22.5 15Z' fill='%23b04e90'/><path d='M49.5 19.5L50.5 10L41.5 15Z' fill='%23b04e90'/><ellipse cx='32' cy='37' rx='22' ry='19' fill='%2335c9ad'/><path d='M7.5 26.5L12.5 24L51.5 24L56.5 26.5L56.5 32.5L50.5 35.5L13.5 35.5L7.5 32.5Z' fill='%23eb98c9' stroke='%23b04e90' stroke-width='2.4' stroke-linejoin='round'/><path d='M32 41.5L29.2 39L34.8 39Z' fill='%23b04e90'/><path d='M21.5 45Q32 57 42.5 45Z' fill='%230a1a16'/><path d='M23 45.7Q32 48.6 41 45.7L40.6 47.4Q32 50.3 23.4 47.4Z' fill='%23ffffff'/></svg>">
+<!-- v10.43 — SEO: search-result description (verbatim maintainer copy),
+     dark theme-colour matching --bg so mobile browser chrome matches,
+     canonical URL anchoring ranking to one address, and social-share
+     cards. Crawlers fetch pages directly, so CSP does not constrain
+     these tags -->
+<meta name="description" content="A fussy little currency converter. Four ready-made NZD pairs, plus one custom card that lets you pick from 22 currencies . . . lucky!">
+<meta name="theme-color" content="#081410">
+<link rel="canonical" href="https://convert.fussycat.app/">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://convert.fussycat.app/">
+<meta property="og:title" content="FX Convert ⇄ Currency">
+<meta property="og:description" content="A fussy little currency converter. Four ready-made NZD pairs, plus one custom card that lets you pick from 22 currencies . . . lucky!">
+<meta property="og:site_name" content="FX Convert">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="FX Convert ⇄ Currency">
+<meta name="twitter:description" content="A fussy little currency converter. Four ready-made NZD pairs, plus one custom card that lets you pick from 22 currencies . . . lucky!">
 <style>
 :root{
   /* v10.38 — the app is dark-only: tell the UA, so native control
@@ -437,7 +458,7 @@ footer{
        to stand alone -->
   <p class="priv"><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer" style="color:var(--rose-light);text-decoration:none">Rates By Exchange Rate API</a></p>
   <p class="maint">Estimates only — use at your own risk</p>
-  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.42</span></p>
+  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.43</span></p>
   <p class="priv"><a href="https://github.com/cknightshift/fx-convert/blob/main/README.md" target="_blank" rel="noopener noreferrer">Catnip, Disclaimer &amp; Privacy Policy</a></p>
 </footer>
 
