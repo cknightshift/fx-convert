@@ -54,7 +54,7 @@
    touching page pinch-zoom */
 /* v10.36: .ccy joined the guard — a select is a tappable control,
    extending the v10.32 scope by its own rule */
-.btn,.nav,.swap,.calc-btn,.calc-pop button,.ccy{touch-action:manipulation}
+.btn,.nav,.swap,.calc-btn,.calc-pop button,.ccy,.brand-link{touch-action:manipulation}
 html,body{min-height:100%}
 body{
   font-family:"Avenir Next","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
@@ -83,6 +83,18 @@ header .logo{flex:0 0 auto;display:block}
 }
 .header-brand .tick{color:var(--teal)}
 @media (max-width:640px){.header-brand{font-size:clamp(20px,3vw,26px)}}
+/* v10.44 — the fussycat.app wordmark badge rides the header's right
+   edge (margin-left:auto in the existing flex row). Height mirrors
+   the neighbouring FX CONVERT brand text's clamps exactly (both
+   tiers), so the pair scales in lockstep; width follows the viewBox
+   aspect (1500:300 = 5:1), so the badge scales without distortion.
+   The 5:1 proportion keeps it a slender bar next to the heavier
+   lettering — full-height presence, no crowding. Hover mirrors the .btn
+   idiom: a gentle brightness lift, nothing more */
+.brand-link{margin-left:auto;flex:0 0 auto;display:block}
+.brand-badge{display:block;height:clamp(22px,3.4vw,32px);width:auto;transition:filter .15s ease}
+@media (max-width:640px){.brand-badge{height:clamp(20px,3vw,26px)}}
+.brand-link:hover .brand-badge{filter:brightness(1.12)}
 
 /* lens shimmer: a light band sweeps across the shield on a loop */
 .logo .shine{
@@ -375,6 +387,23 @@ footer{
     <path d="M27 46.4 L27.3 48.7 M32 47.1 L32 49.4 M37 46.4 L36.7 48.7" stroke="#7fa89e" stroke-width=".9" stroke-linecap="round"/>
   </svg>
   <h1 class="header-brand">FX<span class="tick">&middot;</span>CONVERT</h1>
+  <!-- v10.44 — the fussycat.app wordmark badge, linking home. Outbound
+       hardening per canon: target=_blank with noopener noreferrer;
+       the page-wide no-referrer policy means the click carries nothing
+       about the visitor. The width/height attributes are dropped on
+       purpose: an explicit width would pin the intrinsic size and
+       defeat the responsive CSS; the viewBox alone keeps the 5:1
+       aspect. The anchor's aria-label carries the accessible name;
+       the SVG stays decorative -->
+  <a class="brand-link" href="https://fussycat.app/" target="_blank" rel="noopener noreferrer" aria-label="fussycat.app">
+    <svg class="brand-badge" viewBox="0 0 1500 300" aria-hidden="true">
+      <title>fussycat.app</title>
+      <g font-family="'Archivo Black','Arial Black','Helvetica Neue',sans-serif" font-weight="900">
+        <rect x="15" y="25" width="1470" height="250" rx="20" fill="none" stroke="#d68fc0" stroke-width="10"/>
+        <text x="750" y="210" text-anchor="middle" font-size="185" letter-spacing="2" fill="#d68fc0">fussycat<tspan font-size="120" letter-spacing="1" dx="6" dy="-46">.app</tspan></text>
+      </g>
+    </svg>
+  </a>
 </header>
 
 <div class="controls">
@@ -458,13 +487,42 @@ footer{
        to stand alone -->
   <p class="priv"><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer" style="color:var(--rose-light);text-decoration:none">Rates By Exchange Rate API</a></p>
   <p class="maint">Estimates only — use at your own risk</p>
-  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.43</span></p>
+  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.44</span></p>
   <p class="priv"><a href="https://github.com/cknightshift/fx-convert/blob/main/README.md" target="_blank" rel="noopener noreferrer">Catnip, Disclaimer &amp; Privacy Policy</a></p>
 </footer>
 
 <script>
 (function(){
 'use strict';
+
+/* ===== v10.44 — header wordmark badge: fussycat.app =============
+   - A second brand joins the header: the fussycat.app wordmark
+     badge (inline SVG, adapted from the homepage's markup — the
+     .app suffix enlarged from 92 to 120 units so it stays legible
+     at badge size), pushed to the
+     row's right edge with margin-left:auto. It links to
+     https://fussycat.app/ and, like every outbound link, travels
+     with target="_blank" rel="noopener noreferrer"; the page-wide
+     no-referrer policy means the click carries nothing about the
+     visitor. Banner carried per the v10.26 precedent: link
+     additions are structural, not copy.
+   - Sizing: height mirrors the FX CONVERT brand text's own clamps
+     (clamp(22px,3.4vw,32px), with the ≤640px tier matching the
+     header's media query), width auto by viewBox aspect — the
+     badge and the wordmark grow and shrink in lockstep at every
+     viewport, and the 5:1 proportion keeps the badge a modest
+     bar alongside the heavier lettering. The width/
+     height attributes are dropped: an explicit width pins the
+     intrinsic size and defeats the responsive CSS.
+   - The badge renders from system fonts (Archivo Black falling
+     back through Arial Black); nothing is fetched, so the CSP and
+     the single-file posture are untouched. The anchor's
+     aria-label carries the accessible name; the SVG stays
+     decorative. The badge joined the touch-action:manipulation
+     guard — it is a tappable control and the double-tap-zoom
+     canon applies (the .ccy v10.36 precedent, extended). No
+     animation, so prefers-reduced-motion needs no new rule.
+   ================================================================ */
 
 /* ===== v10.41 — paste-length cap sized to the honest ceiling =====
    - Outside review flagged the amount field's missing input-length
