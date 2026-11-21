@@ -48,6 +48,17 @@
   --bad:#ff5f66;
 }
 *{margin:0;padding:0;box-sizing:border-box}
+/* v10.46 — selected-text tint: the UA's default selection blue is
+   the one colour in the app that never met the palette. Highlight
+   reads --teal (#3ee6c8, the input/from hue), selected text reads
+   #081410 (--bg, the page's own dark) over it — dark-on-teal, the
+   same inversion the amount field performs on the page. Hexes are
+   literal here rather than var(): ::selection resolves custom
+   properties inconsistently across older UAs, and the values are
+   palette bedrock, unlikely to move. Pair covers inputs and
+   text nodes alike; not an animation, so reduced-motion has no
+   stake */
+::selection{background:#3ee6c8;color:#081410}
 /* iOS Safari double-tap zoom guard: rapid tapping on controls — the
    calculator pad above all — is exactly the gesture that triggers it;
    manipulation removes the zoom shortcut on these elements without
@@ -534,13 +545,27 @@ footer{
        to stand alone -->
   <p class="priv"><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer" style="color:var(--rose-light);text-decoration:none">Rates By Exchange Rate API</a></p>
   <p class="maint">Estimates only — use at your own risk</p>
-  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.45</span></p>
+  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.46</span></p>
   <p class="priv"><a href="https://github.com/cknightshift/fx-convert/blob/main/README.md" target="_blank" rel="noopener noreferrer">Catnip, Disclaimer &amp; Privacy Policy</a></p>
 </footer>
 
 <script>
 (function(){
 'use strict';
+
+/* ===== v10.46 — selection tint: teal highlight, dark ink ========
+   - Selected-text highlight recoloured from the platform default
+     blue to the app's own grammar: background #3ee6c8 (--teal,
+     the input/from hue), selected text #081410 (--bg) over it.
+     One global ::selection rule planted beside the reset; it
+     covers text nodes and form fields alike. Values are literal
+     hexes, not var(): ::selection resolves custom properties
+     inconsistently across older UAs, and palette bedrock is
+     unlikely to move. Contrast is the page's own dark-on-teal
+     inversion — legible in both directions, red reservation
+     untouched, nothing fetched, no DOM change. CSS-only, but
+     bannered per the v10.38 color-scheme precedent.
+   ================================================================ */
 
 /* ===== v10.45 — visual round: bookmark beacon, custom-card dressing =
    - The stage's bobbing chevron is recut as a bookmark-style arrow:
