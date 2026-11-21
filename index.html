@@ -1184,7 +1184,7 @@ function fmtPlain(v){
      and the tokenizer rejects the 'e' — a settled value the app
      itself wrote would resurface as the invalid-character hint.
      Expand to plain digits instead. The 1e-10 snap (the Math.round
-     line above) puts every finite result on the 10-decimal grid
+     line below) puts every finite result on the 10-decimal grid
      before any formatting, so toFixed — reached only for tiny
      values already snapped — never rounds a lie into the figure;
      the big paths never reach toFixed at all, expanding exact
