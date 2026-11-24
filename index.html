@@ -194,7 +194,12 @@ header .logo{flex:0 0 auto;display:block}
   will-change:transform;
   transition:none; /* armed after first paint so the load never slides */
 }
-.stage.armed .card{transition:transform .4s cubic-bezier(.2,.7,.3,1)}
+/* v10.48 — the slide tightens: .34s on an ease-out-heavy curve, and
+   opacity joins the transition so the dimming glides with the move
+   instead of popping at its end. The old .4s read as clunk on the
+   wider custom card; the shorter, punchier curve reads closer to
+   instant while keeping the slide. Reduced-motion still overrides */
+.stage.armed .card{transition:transform .34s cubic-bezier(.25,.8,.25,1),opacity .34s ease}
 .stage.rm .card{transition:none !important}
 .stage:focus-visible{outline:1px solid var(--teal);outline-offset:-1px;border-radius:4px}
 .pair{display:flex;align-items:baseline;gap:10px;justify-content:center;flex-wrap:wrap}
@@ -236,31 +241,17 @@ header .logo{flex:0 0 auto;display:block}
 }
 .pair.to .ccy{color:var(--plum)}
 .ccy:focus{outline:1px solid var(--teal);outline-offset:2px}
-/* v10.45 — custom-card dressing: a visible cue that the card is
-   customisable, prominent dropdown arrows, and a softly glowing bulb.
-   Red stays reserved; these all ride the muted and gold families.
-   The bulb halts under prefers-reduced-motion like every moving part */
-.cust-tag{
-  display:flex;align-items:center;justify-content:center;gap:7px;
-  margin-bottom:10px;
-  font-size:10.5px;letter-spacing:.22em;text-transform:uppercase;
-  color:var(--mut);
-}
-.bulb{filter:drop-shadow(0 0 4px rgba(248,198,75,.55))}
-.bulb .halo{
-  transform-box:fill-box;transform-origin:center;
-  animation:flicker 7s linear infinite;
-}
-@keyframes flicker{
-  0%,100%{opacity:.35}
-  4%{opacity:.95}
-  6%{opacity:.4}
-  8%{opacity:1}
-  10%{opacity:.45}
-  12%{opacity:1}
-  30%{opacity:.75}
-  60%{opacity:.5}
-}
+/* v10.48 — the v10.45 custom-card dressing is retired to its
+   chevrons: the "Customisable — pick any two" tag and its
+   flickering bulb are gone. The tag made the custom card ~29px
+   taller than every legacy card, and the calculator pad — which
+   drops from the card's foot — rode the extra height into the
+   stage's overflow:hidden edge, shaving its bottom padding on
+   real displays. Uniform card heights put every pad back inside
+   the stage; the card's own selects carry the affordance now.
+   The bulb's glow filter, the flicker keyframes and its
+   reduced-motion line went with it. The dropdown arrows below
+   keep their v10.45 rationale and their teal/plum grammar */
 /* dropdown arrows with presence: native select chrome is nearly
    invisible on the dark card, so the select draws its own chevron —
    teal on the from side, plum on the to — via data-URI backgrounds,
@@ -393,7 +384,8 @@ footer{
   .orbiter,.spk{animation:none}
   .spk{opacity:.45}
   .bookmark{animation:none}
-  .bulb .halo{animation:none;opacity:.6}
+  /* v10.48 — the bulb's reduced-motion line retired with the bulb
+     itself; see the dressing comment above */
 }
 </style>
 </head>
@@ -561,13 +553,53 @@ footer{
        to stand alone -->
   <p class="priv"><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer" style="color:var(--rose-light);text-decoration:none">Rates By Exchange Rate API</a></p>
   <p class="maint">Estimates only — use at your own risk</p>
-  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.47</span></p>
+  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.48</span></p>
   <p class="priv"><a href="https://github.com/cknightshift/fx-convert/blob/main/README.md" target="_blank" rel="noopener noreferrer">Catnip, Disclaimer &amp; Privacy Policy</a></p>
 </footer>
 
 <script>
 (function(){
 'use strict';
+
+/* ===== v10.48 — click-to-select, slide tightened, tag retired =====
+   - Card selection gains a second path: any card in the carousel
+     — or the gap it sits in — can be clicked, tapped or touched
+     to bring it centre, alongside the arrows and the arrow keys.
+     The mechanism is geometric, not per-card: off-centre cards
+     carry inert, which removes them from hit-testing, so the
+     click lands on the stage and the stage resolves which slot
+     was struck from the click's x — the same slot arithmetic
+     layout() performs, against its cached cardW measure. Clicks
+     inside the centred card's controls and on the nav arrows bow
+     out; clicks outside any slot's horizontal span do nothing.
+     The pad closes on the jump, mirroring go(). Keyboard
+     navigation, focus retention and inert are untouched — a
+     click never lands on an inert card's controls, by design.
+   - The slide tightens: transform drops from .4s to .34s on an
+     ease-out-heavy curve, and opacity joins the transition so a
+     card's dimming glides with its travel instead of popping at
+     the end. The wider custom card made the old timing read as
+     clunk; the shorter curve reads close to instant while
+     keeping the slide. Reduced-motion still kills both.
+   - The custom card sheds its v10.45 tag and bulb: the
+     "Customisable — pick any two" line, the BULB_SVG constant,
+     the .cust-tag and .bulb rules, the flicker keyframes and the
+     reduced-motion line — one sweep, nothing dead left behind.
+     Reason: the tag made the custom card ~29px taller than every
+     legacy card, and its calculator pad, dropping from the
+     card's foot, clipped at the stage's overflow:hidden edge on
+     real displays. Uniform heights put every pad back inside the
+     stage. The select chevrons keep their v10.45 rationale and
+     teal/plum grammar; the v10.45 banner stays frozen history.
+   - Recorded, declined: per-card transition timing for the
+     custom card (one class, one motion — no special-casing) and
+     dropping the animation for an instant snap (the slide is the
+     carousel's character; slick was wanted, not sterile).
+     Known limit, accepted: an arrow-key wrap traverses the long
+     way across the stage by design of the modular offset — the
+     jump is correct, the traverse is simply long.
+   - Stamp to v10.48.
+   ================================================================ */
 
 /* ===== v10.46 — selection tint: teal highlight, dark ink ========
    - Selected-text highlight recoloured from the platform default
@@ -1266,26 +1298,6 @@ function hhmm(d){
 }
 
 /* ---------------- card construction ---------------- */
-/* v10.45 — the custom card's bulb: gold like the heart's sparks, no
-   outline, a soft halo circle behind the globe carrying the 7s
-   flicker (the CSS animation targets .bulb .halo). The halo radius
-   is sized to sit fully inside its viewBox — the first cut (r 8)
-   clipped the glow's crown at the frame edge and broke its round,
-   spotted on a real display. Built as a
-   constant so the tag markup below stays one clean line */
-const BULB_SVG =
-  '<svg class="bulb" width="15" height="19" viewBox="0 0 15 19" aria-hidden="true">' +
-    '<defs>' +
-      '<radialGradient id="bulbG" cx="0.5" cy="0.38" r="0.7">' +
-        '<stop offset="0" stop-color="#fffbe0"/><stop offset="1" stop-color="#f8c64b"/>' +
-      '</radialGradient>' +
-    '</defs>' +
-    '<circle class="halo" cx="7.5" cy="6.8" r="6.5" fill="#f8c64b"/>' +
-    '<circle cx="7.5" cy="6.8" r="5.4" fill="url(#bulbG)"/>' +
-    '<path d="M5.4 12 L9.6 12 L8.9 15.8 L6.1 15.8 Z" fill="#e0b04a"/>' +
-    '<path d="M6.4 16.4 L8.6 16.4 L7.5 18 Z" fill="#e0b04a"/>' +
-  '</svg>';
-
 const CARD_SVG_CALC =
   '<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">' +
     '<rect x="2" y="2" width="16" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/>' +
@@ -1334,11 +1346,11 @@ function buildCard(pair, opts){
 
   if (isCustom){
     el.innerHTML =
-      /* v10.45 — the customisable tag: the dropdowns' affordance was
-         too subtle to announce the card's nature, so the card says so
-         itself, with the flickering bulb riding along as its mark.
-         The labels below keep their span-based rendering untouched */
-      '<div class="cust-tag">' + BULB_SVG + '<span>Customisable &mdash; pick any two</span></div>' +
+      /* v10.48 — the customisable tag and its bulb are retired: the
+         tag made this card taller than every legacy card, and its
+         calculator pad clipped at the stage edge on real displays.
+         The dropdowns carry the affordance alone now. The labels
+         below keep their span-based rendering untouched */
       '<div class="pair from"><select class="ccy from-ccy" aria-label="From currency"></select></div>' +
       '<button class="swap" type="button" aria-label="Reverse direction">\u21c4</button>' +
       '<div class="pair to"><select class="ccy to-ccy" aria-label="To currency"></select></div>' +
@@ -1736,6 +1748,33 @@ function go(step){
 
 document.getElementById('prevBtn').addEventListener('click', () => { go(-1); });
 document.getElementById('nextBtn').addEventListener('click', () => { go(1); });
+
+/* v10.48 — click-to-select: any card is a target now, by click,
+   tap or touch. Off-centre cards carry inert, which removes them
+   from hit-testing entirely — a click on a dimmed card lands on
+   the stage beneath — so this listener lives on the stage and
+   resolves the card geometrically from the click's x, the same
+   slot arithmetic layout() performs. Two guards: a click inside
+   any card (the centred one's own controls) bows out, and so does
+   a click on a nav arrow, whose own handler already drove the
+   step — without the guard the stage would step twice. Clicks
+   outside a slot's horizontal span are scenery, not selection.
+   cardW is layout()'s cached measure; the 26px gap is layout()'s
+   GAP mirrored — kept in step by comment, the two live a screen
+   apart */
+stage.addEventListener('click', e => {
+  if (e.target.closest('.card') || e.target.closest('.nav')) return;
+  const n = cards.length;
+  if (!n) return;
+  const w = stage.clientWidth;
+  const slot = cardW + 26;
+  const x = e.clientX - stage.getBoundingClientRect().left;
+  const rel = Math.round((x - w / 2) / slot);
+  if (rel === 0 || Math.abs(x - (w / 2 + rel * slot)) > cardW / 2) return;
+  closePop(); /* the pad belongs to the card in focus; it doesn't ride along */
+  index = ((index + rel) % n + n) % n;
+  layout();
+});
 
 /* keyboard navigation on the focused stage; arrows pressed inside an
    input are stopped upstream unless the caret is parked at an edge */
