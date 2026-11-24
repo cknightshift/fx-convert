@@ -6,21 +6,7 @@
 <title>FX Convert ⇄ Currency</title>
 <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; script-src 'unsafe-inline'; connect-src https://open.er-api.com https://api.frankfurter.dev; img-src data:; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="no-referrer">
-<!-- v10.43 — favicon cut from the header logo's own geometry (ears,
-     lens shield, nose, grin), embedded as an SVG data URI so the
-     single-file posture holds: no external asset, no request. img-src
-     data: in the CSP above is the one allowance this needs -->
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><path d='M12 24L10 6L26 14Z' fill='%232bb89c'/><path d='M52 24L54 6L38 14Z' fill='%232bb89c'/><path d='M14.5 19.5L13.5 10L22.5 15Z' fill='%23b04e90'/><path d='M49.5 19.5L50.5 10L41.5 15Z' fill='%23b04e90'/><ellipse cx='32' cy='37' rx='22' ry='19' fill='%2335c9ad'/><path d='M7.5 26.5L12.5 24L51.5 24L56.5 26.5L56.5 32.5L50.5 35.5L13.5 35.5L7.5 32.5Z' fill='%23eb98c9' stroke='%23b04e90' stroke-width='2.4' stroke-linejoin='round'/><path d='M32 41.5L29.2 39L34.8 39Z' fill='%23b04e90'/><path d='M21.5 45Q32 57 42.5 45Z' fill='%230a1a16'/><path d='M23 45.7Q32 48.6 41 45.7L40.6 47.4Q32 50.3 23.4 47.4Z' fill='%23ffffff'/></svg>">
-<!-- v10.43 — SEO: search-result description, dark theme-colour
-     matching --bg so mobile browser chrome matches, canonical URL
-     anchoring ranking to one address, and social-share cards.
-     Crawlers fetch pages directly, so CSP does not constrain
-     these tags -->
-<!-- v10.47 — description split: meta description keeps the verbatim
-     maintainer copy (search-result snippet); og:description and
-     twitter:description carry their own maintainer copy, so the
-     v10.43 all-three-identical rule ends here by maintainer
-     instruction -->
 <meta name="description" content="A fussy little currency converter. Four ready-made NZD pairs, plus one custom card that lets you pick from 22 currencies . . . lucky!">
 <meta name="theme-color" content="#081410">
 <link rel="canonical" href="https://convert.fussycat.app/">
@@ -29,12 +15,6 @@
 <meta property="og:title" content="FX Convert ⇄ Currency">
 <meta property="og:description" content="The fussiest app by the fussiest cat. Be a cool, clever kitty too — use FX Convert meow!">
 <meta property="og:site_name" content="FX Convert">
-<!-- v10.47 — the share-card image set: the one hosted asset. og:image
-     and twitter:image point at the comic webp served from the repo
-     root; twitter:card flips summary to summary_large_image because
-     the broad card is the whole point of the asset. Width/height ride
-     the tag set so scrapers render the card without fetching first;
-     the alt names the scene for anything that cannot see it -->
 <meta property="og:image" content="https://convert.fussycat.app/fx-convert-comic.webp">
 <meta property="og:image:width" content="1280">
 <meta property="og:image:height" content="832">
@@ -45,16 +25,12 @@
 <meta name="twitter:description" content="The fussiest app by the fussiest cat. Be a cool, clever kitty too — use FX Convert meow!">
 <style>
 :root{
-  /* v10.38 — the app is dark-only: tell the UA, so native control
-     chrome (the custom card's two select popups above all) and
-     scrollbars render in the platform's dark theme instead of
-     flashing a light one */
   color-scheme:dark;
   --bg:#081410;
   --bg-deep:#060f0c;
   --teal:#3ee6c8;
   --plum:#b04e90;
-  --rose-light:#c9659f; /* lightest rose from Update Rates button gradient */
+  --rose-light:#c9659f;
   --ink:#eaf6f2;
   --mut:#7fa89e;
   --dim:#4f756c;
@@ -64,23 +40,7 @@
   --bad:#ff5f66;
 }
 *{margin:0;padding:0;box-sizing:border-box}
-/* v10.46 — selected-text tint: the UA's default selection blue is
-   the one colour in the app that never met the palette. Highlight
-   reads --teal (#3ee6c8, the input/from hue), selected text reads
-   #081410 (--bg, the page's own dark) over it — dark-on-teal, the
-   same inversion the amount field performs on the page. Hexes are
-   literal here rather than var(): ::selection resolves custom
-   properties inconsistently across older UAs, and the values are
-   palette bedrock, unlikely to move. Pair covers inputs and
-   text nodes alike; not an animation, so reduced-motion has no
-   stake */
 ::selection{background:#3ee6c8;color:#081410}
-/* iOS Safari double-tap zoom guard: rapid tapping on controls — the
-   calculator pad above all — is exactly the gesture that triggers it;
-   manipulation removes the zoom shortcut on these elements without
-   touching page pinch-zoom */
-/* v10.36: .ccy joined the guard — a select is a tappable control,
-   extending the v10.32 scope by its own rule */
 .btn,.nav,.swap,.calc-btn,.calc-pop button,.ccy,.brand-link{touch-action:manipulation}
 html,body{min-height:100%}
 body{
@@ -94,10 +54,7 @@ body{
   display:flex;flex-direction:column;
   overflow-x:hidden;
 }
-/* static grain overlay */
 .grain{position:fixed;inset:0;width:100%;height:100%;pointer-events:none;z-index:60;opacity:.055}
-
-/* ---------- header ---------- */
 header{
   display:flex;align-items:center;gap:18px;
   padding:13px clamp(16px,4vw,44px) 10px;
@@ -110,20 +67,10 @@ header .logo{flex:0 0 auto;display:block}
 }
 .header-brand .tick{color:var(--teal)}
 @media (max-width:640px){.header-brand{font-size:clamp(20px,3vw,26px)}}
-/* v10.44 — the fussycat.app wordmark badge rides the header's right
-   edge (margin-left:auto in the existing flex row). Height mirrors
-   the neighbouring FX CONVERT brand text's clamps exactly (both
-   tiers), so the pair scales in lockstep; width follows the viewBox
-   aspect (1500:300 = 5:1), so the badge scales without distortion.
-   The 5:1 proportion keeps it a slender bar next to the heavier
-   lettering — full-height presence, no crowding. Hover mirrors the .btn
-   idiom: a gentle brightness lift, nothing more */
 .brand-link{margin-left:auto;flex:0 0 auto;display:block}
 .brand-badge{display:block;height:clamp(22px,3.4vw,32px);width:auto;transition:filter .15s ease}
 @media (max-width:640px){.brand-badge{height:clamp(20px,3vw,26px)}}
 .brand-link:hover .brand-badge{filter:brightness(1.12)}
-
-/* lens shimmer: a light band sweeps across the shield on a loop */
 .logo .shine{
   animation:shimmer 3.8s ease-in-out infinite;
 }
@@ -136,8 +83,6 @@ header .logo{flex:0 0 auto;display:block}
 @media (prefers-reduced-motion:reduce){
   .logo .shine{animation:none;opacity:.55;transform:translateX(4px)}
 }
-
-/* ---------- controls / status ---------- */
 .controls{
   display:flex;align-items:center;gap:16px;flex-wrap:wrap;
   padding:5px clamp(16px,4vw,44px) 9px;
@@ -160,17 +105,12 @@ header .logo{flex:0 0 auto;display:block}
   font-size:13.5px;color:var(--mut);min-height:1.2em;
 }
 .status.err{color:var(--bad)}
-
-/* ---------- carousel stage ---------- */
 .stage{
   position:relative;flex:1 0 auto;
   min-height:520px;
   overflow:hidden;
   margin:0 clamp(10px,3vw,34px) 4px;
 }
-/* gem-cut beacon: pinned to the stage's top centre — the same axis
-   layout() centres the active card on — and pointing down at it.
-   pointer-events:none keeps it clear of every click beneath it */
 .beacon{
   position:absolute;top:8px;left:50%;transform:translateX(-50%);
   z-index:25;pointer-events:none;
@@ -192,13 +132,8 @@ header .logo{flex:0 0 auto;display:block}
   padding:24px 24px 26px;
   box-shadow:0 18px 50px rgba(0,0,0,.5), inset 0 1px 0 rgba(62,230,200,.08);
   will-change:transform;
-  transition:none; /* armed after first paint so the load never slides */
+  transition:none;
 }
-/* v10.48 — the slide tightens: .34s on an ease-out-heavy curve, and
-   opacity joins the transition so the dimming glides with the move
-   instead of popping at its end. The old .4s read as clunk on the
-   wider custom card; the shorter, punchier curve reads closer to
-   instant while keeping the slide. Reduced-motion still overrides */
 .stage.armed .card{transition:transform .34s cubic-bezier(.25,.8,.25,1),opacity .34s ease}
 .stage.rm .card{transition:none !important}
 .stage:focus-visible{outline:1px solid var(--teal);outline-offset:-1px;border-radius:4px}
@@ -229,11 +164,6 @@ header .logo{flex:0 0 auto;display:block}
 }
 .amt:focus{border-color:var(--teal)}
 .amt::placeholder{color:#3a5c53}
-/* v10.36 — custom card selects: they occupy the slot the static
-   .code spans hold on legacy cards, so they mirror the code
-   styling (24px bold, tracked, teal) and the plum flip for the to
-   side, over transparent chrome. Native pickers take it from
-   there. flex-wrap on .pair absorbs the longest names */
 .pair .ccy{
   font-family:inherit;font-size:24px;font-weight:700;letter-spacing:.06em;
   color:var(--teal);background:none;border:none;
@@ -241,24 +171,6 @@ header .logo{flex:0 0 auto;display:block}
 }
 .pair.to .ccy{color:var(--plum)}
 .ccy:focus{outline:1px solid var(--teal);outline-offset:2px}
-/* v10.48 — the v10.45 custom-card dressing is retired to its
-   chevrons: the "Customisable — pick any two" tag and its
-   flickering bulb are gone. The tag made the custom card ~29px
-   taller than every legacy card, and the calculator pad — which
-   drops from the card's foot — rode the extra height into the
-   stage's overflow:hidden edge, shaving its bottom padding on
-   real displays. Uniform card heights put every pad back inside
-   the stage; the card's own selects carry the affordance now.
-   The bulb's glow filter, the flicker keyframes and its
-   reduced-motion line went with it. The dropdown arrows below
-   keep their v10.45 rationale and their teal/plum grammar */
-/* dropdown arrows with presence: native select chrome is nearly
-   invisible on the dark card, so the select draws its own chevron —
-   teal on the from side, plum on the to — via data-URI backgrounds,
-   riding the favicon's existing img-src data: CSP allowance (nothing
-   fetched, nothing new allowed). appearance:none removes the native
-   arrow so the two never double up; padding-right reserves the
-   arrow's lane so long currency names never run beneath it */
 .pair .ccy{
   appearance:none;
   padding-right:22px;
@@ -280,9 +192,6 @@ header .logo{flex:0 0 auto;display:block}
 .calc-msg{
   margin-top:6px;font-size:12.5px;color:var(--bad);letter-spacing:.02em;
 }
-/* quiet variant: for gentle guidance, not alarm — red stays
-   reserved for the divide-by-zero message, the C key and the
-   bad status dot, nothing else */
 .calc-msg.hint{color:var(--mut)}
 .out{
   margin-top:4px;font-size:30px;font-weight:600;color:var(--plum);
@@ -296,9 +205,6 @@ header .logo{flex:0 0 auto;display:block}
   background:#0e2620;border:1px solid var(--card-edge);border-radius:12px;
   padding:7px;box-shadow:0 16px 40px rgba(0,0,0,.55);
 }
-/* the pad's own display rule would otherwise outrank the [hidden]
-   attribute's UA stylesheet, so a "closed" pad stayed visible
-   while detached from its card: buttons dead, nothing dismissible */
 .calc-pop[hidden]{display:none}
 .calc-pop button{
   appearance:none;font:inherit;font-size:18px;
@@ -309,8 +215,6 @@ header .logo{flex:0 0 auto;display:block}
 .calc-pop button:hover{background:rgba(62,230,200,.18)}
 .calc-pop button.ok{color:var(--teal);font-weight:700}
 .calc-pop button.cls{color:var(--bad);font-weight:700}
-
-/* nav arrows */
 .nav{
   position:absolute;top:50%;transform:translateY(-50%);z-index:30;
   appearance:none;width:46px;height:46px;border-radius:50%;
@@ -322,8 +226,6 @@ header .logo{flex:0 0 auto;display:block}
 .nav.prev{left:6px}
 .nav.next{right:6px}
 @media (max-width:560px){.nav{width:38px;height:38px}.nav.prev{left:2px}.nav.next{right:2px}}
-
-/* ---------- footer ---------- */
 footer{
   text-align:center;padding:13px 16px 30px;
   border-top:1px solid rgba(28,58,50,.6);
@@ -337,9 +239,6 @@ footer{
 .maint{
   margin-top:4px;font-size:15.5px;color:var(--mut);letter-spacing:.01em;
 }
-/* v10.34 retired the maintainer line's link, orphaning every
-   .maint a selector that used to live here; swept in the v10.35
-   tidy. The .priv halves stay: the privacy line still links */
 .priv a{text-decoration:none}
 .priv a:hover{color:var(--teal)}
 .priv{
@@ -354,8 +253,6 @@ footer{
 .dot.bad{background:var(--bad);box-shadow:0 0 6px rgba(255,95,102,.7)}
 .dot.busy{background:#57756c}
 .ver{font-size:12px;color:var(--rose-light);letter-spacing:.12em;margin-left:7px}
-
-/* gold spark orbits the heart's edge in sporadic arcs, twinkling as it goes */
 .orbiter{
   transform-box:fill-box;transform-origin:center;
   animation:orbit 9s cubic-bezier(.55,0,.35,1) infinite;
@@ -363,9 +260,9 @@ footer{
 @keyframes orbit{
   0%{transform:rotate(0deg)}
   24%{transform:rotate(148deg)}
-  36%{transform:rotate(148deg)}   /* linger */
+  36%{transform:rotate(148deg)}
   66%{transform:rotate(272deg)}
-  78%{transform:rotate(272deg)}   /* linger */
+  78%{transform:rotate(272deg)}
   100%{transform:rotate(360deg)}
 }
 .spk{
@@ -384,14 +281,10 @@ footer{
   .orbiter,.spk{animation:none}
   .spk{opacity:.45}
   .bookmark{animation:none}
-  /* v10.48 — the bulb's reduced-motion line retired with the bulb
-     itself; see the dressing comment above */
 }
 </style>
 </head>
 <body>
-
-<!-- static grain overlay -->
 <svg class="grain" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
   <filter id="grainF">
     <feTurbulence type="fractalNoise" baseFrequency="0.82" numOctaves="2" stitchTiles="stitch"/>
@@ -399,9 +292,7 @@ footer{
   </filter>
   <rect width="100%" height="100%" filter="url(#grainF)"/>
 </svg>
-
 <header>
-  <!-- cat logo: face only, static pose, friendly spunk; whisker-free -->
   <svg class="logo" width="58" height="58" viewBox="0 0 64 64" aria-hidden="true">
     <defs>
       <linearGradient id="lensG" x1="0" y1="0" x2="0" y2="1">
@@ -418,46 +309,28 @@ footer{
         <path d="M7.5 26.5 L12.5 24 L51.5 24 L56.5 26.5 L56.5 32.5 L50.5 35.5 L13.5 35.5 L7.5 32.5 Z"/>
       </clipPath>
     </defs>
-    <!-- ears: teal outer, plum inner -->
     <path d="M12 24 L10 6 L26 14 Z" fill="#2bb89c"/>
     <path d="M52 24 L54 6 L38 14 Z" fill="#2bb89c"/>
     <path d="M14.5 19.5 L13.5 10 L22.5 15 Z" fill="#b04e90"/>
     <path d="M49.5 19.5 L50.5 10 L41.5 15 Z" fill="#b04e90"/>
-    <!-- head -->
     <ellipse cx="32" cy="37" rx="22" ry="19" fill="#35c9ad"/>
-    <!-- expressive brows just above the shield frame -->
     <path d="M15 20.5 Q20 17.5 24.5 19" fill="none" stroke="#1f9e86" stroke-width="2" stroke-linecap="round"/>
     <path d="M39.5 19 Q44 17.5 49 20.5" fill="none" stroke="#1f9e86" stroke-width="2" stroke-linecap="round"/>
-    <!-- sunglasses: Oil Rig-style wraparound — one continuous rectangular
-         shield with chamfered corners, tapering outward past the temples;
-         no nose gap, fully opaque lens, nothing behind it -->
     <path d="M7.5 26.5 L12.5 24 L51.5 24 L56.5 26.5 L56.5 32.5 L50.5 35.5 L13.5 35.5 L7.5 32.5 Z" fill="url(#lensG)"/>
-    <!-- the slick bit: a light band sweeping across the whole shield -->
     <g clip-path="url(#lensClip)">
       <g transform="rotate(12 32 28)">
         <rect class="shine" x="18" y="14" width="9" height="30" fill="url(#shineBand)"/>
       </g>
     </g>
-    <!-- frame: single plum outline around the shield, temple arms sweeping back -->
     <path d="M7.5 26.5 L12.5 24 L51.5 24 L56.5 26.5 L56.5 32.5 L50.5 35.5 L13.5 35.5 L7.5 32.5 Z" fill="none" stroke="#b04e90" stroke-width="2.4" stroke-linejoin="round"/>
     <path d="M8 29 L2.5 27" stroke="#b04e90" stroke-width="2.2" stroke-linecap="round"/>
     <path d="M56 29 L61.5 27" stroke="#b04e90" stroke-width="2.2" stroke-linecap="round"/>
-    <!-- nose -->
     <path d="M32 41.5 L29.2 39 L34.8 39 Z" fill="#b04e90"/>
-    <!-- the grin: open smile with a flat-toothed band (no fangs) -->
     <path d="M21.5 45 Q32 57 42.5 45 Z" fill="#0a1a16"/>
     <path d="M23 45.7 Q32 48.6 41 45.7 L40.6 47.4 Q32 50.3 23.4 47.4 Z" fill="#ffffff"/>
     <path d="M27 46.4 L27.3 48.7 M32 47.1 L32 49.4 M37 46.4 L36.7 48.7" stroke="#7fa89e" stroke-width=".9" stroke-linecap="round"/>
   </svg>
   <h1 class="header-brand">FX<span class="tick">&middot;</span>CONVERT</h1>
-  <!-- v10.44 — the fussycat.app wordmark badge, linking home. Outbound
-       hardening per canon: target=_blank with noopener noreferrer;
-       the page-wide no-referrer policy means the click carries nothing
-       about the visitor. The width/height attributes are dropped on
-       purpose: an explicit width would pin the intrinsic size and
-       defeat the responsive CSS; the viewBox alone keeps the 5:1
-       aspect. The anchor's aria-label carries the accessible name;
-       the SVG stays decorative -->
   <a class="brand-link" href="https://fussycat.app/" target="_blank" rel="noopener noreferrer" aria-label="fussycat.app">
     <svg class="brand-badge" viewBox="0 0 1500 300" aria-hidden="true">
       <title>fussycat.app</title>
@@ -468,7 +341,6 @@ footer{
     </svg>
   </a>
 </header>
-
 <div class="controls">
   <button id="updbtn" class="btn" type="button">Update Rates</button>
   <div class="status" id="statusWrap" role="status">
@@ -476,13 +348,7 @@ footer{
     <span id="statusText">Waking up the rates desk&hellip;</span>
   </div>
 </div>
-
 <main class="stage" id="stage" aria-label="Currency pair carousel" tabindex="0">
-  <!-- diamond-cut bookmark arrow: the same matte facet language as the
-       footer heart and the chevron it succeeds — deepest-tone
-       silhouette, tonal-step plums, hard-cut miter outline, keel
-       ridge — recut as a bookmark pennant pointing down at whichever
-       card layout() has centred. Same bob, same gold spark -->
   <div class="beacon" aria-hidden="true">
     <svg class="bookmark" width="44" height="46" viewBox="0 0 40 42">
       <defs>
@@ -490,40 +356,30 @@ footer{
           <stop offset="0" stop-color="#fffbe0"/><stop offset="1" stop-color="#f8c64b"/>
         </linearGradient>
       </defs>
-      <!-- silhouette: deepest matte tone shows through as facet seams -->
       <path d="M6 4 L34 4 L34 21 L20 32 L6 21 Z" fill="#5e1d47"/>
-      <!-- facets: flat matte plums, tonal steps only, no gloss -->
       <polygon points="6,4 34,4 34,9 6,9" fill="#b04e90"/>
       <polygon points="6,9 20,9 20,32 6,21" fill="#a3417f"/>
       <polygon points="20,9 34,9 34,21 20,32" fill="#8e3368"/>
-      <!-- bevelled keel ridge running down to the point -->
       <polygon points="17,10 23,10 20,27" fill="#963a74"/>
-      <!-- hard-cut outline -->
       <path d="M6 4 L34 4 L34 21 L20 32 L6 21 Z" fill="none" stroke="#43142f" stroke-width="1.3" stroke-linejoin="miter"/>
-      <!-- gold spark twinkling just past the point, on the heart's clock -->
       <polygon class="spk" style="--td:3.9s" points="20,33.8 22.1,36.1 20,38.4 17.9,36.1" fill="url(#gshC)"/>
     </svg>
   </div>
   <button class="nav prev" id="prevBtn" type="button" aria-label="Previous pair">
     <svg width="15" height="22" viewBox="0 0 15 22" fill="none" aria-hidden="true"><path d="M13 2 L3 11 L13 20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </button>
-  <!-- cards injected by script -->
   <button class="nav next" id="nextBtn" type="button" aria-label="Next pair">
     <svg width="15" height="22" viewBox="0 0 15 22" fill="none" aria-hidden="true"><path d="M2 2 L12 11 L2 20" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
   </button>
 </main>
-
 <footer>
-  <!-- sharply-cut matte heart with a gold spark orbiting its edge -->
   <svg class="gem" width="56" height="52" viewBox="0 0 64 60" aria-hidden="true">
     <defs>
       <linearGradient id="gsh" x1="0" y1="0" x2="0" y2="1">
         <stop offset="0" stop-color="#fffbe0"/><stop offset="1" stop-color="#f8c64b"/>
       </linearGradient>
     </defs>
-    <!-- silhouette: deepest matte tone shows through as facet seams -->
     <path d="M32 18 L18 4 L6 13 L3 26 L13 40 L32 57 L51 40 L61 26 L58 13 L46 4 Z" fill="#5e1d47"/>
-    <!-- facets: flat matte plums, tonal steps only, no gloss -->
     <polygon points="32,18 18,4 6,13 20,28" fill="#a3417f"/>
     <polygon points="32,18 46,4 58,13 44,28" fill="#963a74"/>
     <polygon points="6,13 3,26 13,40 20,28" fill="#ab4684"/>
@@ -531,561 +387,23 @@ footer{
     <polygon points="32,18 20,28 32,46 44,28" fill="#b04e90"/>
     <polygon points="20,28 13,40 32,57 32,46" fill="#9c3d79"/>
     <polygon points="44,28 51,40 32,57 32,46" fill="#8a305f"/>
-    <!-- hard-cut outline -->
     <path d="M32 18 L18 4 L6 13 L3 26 L13 40 L32 57 L51 40 L61 26 L58 13 L46 4 Z" fill="none" stroke="#43142f" stroke-width="1.3" stroke-linejoin="miter"/>
-    <!-- orbiting gold sparks: pair sits diametrically opposite so the
-         group's own centre equals the heart's centre, then the whole
-         ring steps around in sporadic arcs while sparks twinkle -->
     <g class="orbiter">
       <polygon class="spk" style="--td:4.6s" points="32,0 34,2.8 32,5.6 30,2.8" fill="url(#gsh)"/>
       <polygon class="spk" style="--td:3.7s;-webkit-animation-delay:.9s;animation-delay:.9s" points="32,54.4 34,57.2 32,60 30,57.2" fill="url(#gsh)"/>
     </g>
   </svg>
-  <!-- v10.34: the maintainer line gives way to a disclaimer, promoted
-       to the top of the footer stack and keeping the 15.5px maint slot;
-       the handle moves onto the signature line as plain text (no link),
-       carrying its 15.5px rose-light with it; the version stamp rides
-       at the end of the line, class and styling unchanged -->
-  <!-- v10.35: the ExchangeRate-API credit moves from the tail of the
-       privacy line to the very top of the text stack, above the
-       disclaimer — size (13px), rose-light colour and href untouched;
-       the middot separator goes with it, leaving the privacy line
-       to stand alone -->
   <p class="priv"><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer" style="color:var(--rose-light);text-decoration:none">Rates By Exchange Rate API</a></p>
   <p class="maint">Estimates only — use at your own risk</p>
-  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.49</span></p>
+  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.50</span></p>
   <p class="priv"><a href="https://github.com/cknightshift/fx-convert/blob/main/README.md" target="_blank" rel="noopener noreferrer">Catnip, Disclaimer &amp; Privacy Policy</a></p>
 </footer>
-
 <script>
 (function(){
 'use strict';
 
-/* ===== v10.49 — click-to-select gains its vertical band ==========
-   - An outside observation on the shipped v10.48: a selection was
-     registered for clicks well above or below a card, anywhere in
-     its x-span. Expected given the mechanism, not intended: the
-     slot resolver reads only the click's x (it must — inert
-     off-centre cards pass every click through to the stage), and
-     the stage is far taller than the card row, so vertical
-     overshoot shared a slot's horizontal span without touching
-     the card. The v10.48 banner's "gap it sits in" claim covered
-     the horizontal gap only; the vertical overshoot was an
-     oversight of the geometry, now closed.
-   - Fix at the same decision point, mirroring the horizontal
-     test's spirit: x decides which card, y decides whether the
-     card was actually struck. After slot resolution, the target
-     card's live bounding rect (getBoundingClientRect, read per
-     click, never cached) must contain the click's y. One guard,
-     no timers, no per-card wiring; the rect cannot drift because
-     it is read from the browser at strike time. The horizontal
-     gap stays selectable within the band; rounded corners sit
-     inside the rect, so a corner-notch click selecting is
-     accepted as honest. Keyboard navigation, arrows, focus
-     retention and inert untouched.
-   - Outside-audit tidy folded into this unpublished batch (no
-     extra bump): the card gap hoisted into a CARD_GAP constant
-     beside cardW, consumed by layout() and the stage listener
-     alike — the mirror-by-comment coupling retires; the v10.45
-     banner's opening delimiter repaired to a matched ==== run
-     (cosmetic, text untouched). A reported column-0 indentation
-     drift on two buildCard() listener lines was adjudicated
-     CONDITIONAL and refuted by the file — the lines sit at the
-     function's true indent; no fix shipped.
-   - Stamp to v10.49.
-   ================================================================ */
-
-/* ===== v10.48 — click-to-select, slide tightened, tag retired =====
-   - Card selection gains a second path: any card in the carousel
-     — or the gap it sits in — can be clicked, tapped or touched
-     to bring it centre, alongside the arrows and the arrow keys.
-     The mechanism is geometric, not per-card: off-centre cards
-     carry inert, which removes them from hit-testing, so the
-     click lands on the stage and the stage resolves which slot
-     was struck from the click's x — the same slot arithmetic
-     layout() performs, against its cached cardW measure. Clicks
-     inside the centred card's controls and on the nav arrows bow
-     out; clicks outside any slot's horizontal span do nothing.
-     The pad closes on the jump, mirroring go(). Keyboard
-     navigation, focus retention and inert are untouched — a
-     click never lands on an inert card's controls, by design.
-   - The slide tightens: transform drops from .4s to .34s on an
-     ease-out-heavy curve, and opacity joins the transition so a
-     card's dimming glides with its travel instead of popping at
-     the end. The wider custom card made the old timing read as
-     clunk; the shorter curve reads close to instant while
-     keeping the slide. Reduced-motion still kills both.
-   - The custom card sheds its v10.45 tag and bulb: the
-     "Customisable — pick any two" line, the BULB_SVG constant,
-     the .cust-tag and .bulb rules, the flicker keyframes and the
-     reduced-motion line — one sweep, nothing dead left behind.
-     Reason: the tag made the custom card ~29px taller than every
-     legacy card, and its calculator pad, dropping from the
-     card's foot, clipped at the stage's overflow:hidden edge on
-     real displays. Uniform heights put every pad back inside the
-     stage. The select chevrons keep their v10.45 rationale and
-     teal/plum grammar; the v10.45 banner stays frozen history.
-   - Recorded, declined: per-card transition timing for the
-     custom card (one class, one motion — no special-casing) and
-     dropping the animation for an instant snap (the slide is the
-     carousel's character; slick was wanted, not sterile).
-     Known limit, accepted: an arrow-key wrap traverses the long
-     way across the stage by design of the modular offset — the
-     jump is correct, the traverse is simply long.
-   - Stamp to v10.48.
-   ================================================================ */
-
-/* ===== v10.46 — selection tint: teal highlight, dark ink ========
-   - Selected-text highlight recoloured from the platform default
-     blue to the app's own grammar: background #3ee6c8 (--teal,
-     the input/from hue), selected text #081410 (--bg) over it.
-     One global ::selection rule planted beside the reset; it
-     covers text nodes and form fields alike. Values are literal
-     hexes, not var(): ::selection resolves custom properties
-     inconsistently across older UAs, and palette bedrock is
-     unlikely to move. Contrast is the page's own dark-on-teal
-     inversion — legible in both directions, red reservation
-     untouched, nothing fetched, no DOM change. CSS-only, but
-     bannered per the v10.38 color-scheme precedent.
-   ================================================================ */
-
-/* ===== v10.45 — visual round: bookmark beacon, custom-card dressing ====
-   - The stage's bobbing chevron is recut as a bookmark-style arrow:
-     same bob (2.6s), same tip spark on the heart's .spk clock, same
-     matte facet palette and hard-cut outline, new pennant silhouette
-     pointing at the centred card. The .chevron selector becomes
-     .bookmark; prefers-reduced-motion still holds it still.
-   - The custom card announces itself: a muted tag ("Customisable —
-     pick any two") leads the card, carrying a gold bulb whose halo
-     flickers on a 7-second clock (a soft drop-shadow glow, no
-     outline); the two selects draw their own chevrons — teal from,
-     plum to — over appearance:none, because the native arrows were
-     nearly invisible on the dark card. The arrow backgrounds are
-     data URIs riding the favicon's existing img-src data: CSP
-     allowance; nothing fetched, no new allowance granted. The
-     bulb's halo is sized to stay inside its own viewBox — the
-     first cut (r 8) clipped the glow's crown on a real display,
-     and a clipped glow is no longer round.
-   - Comment hygiene: fmtPlain's top comment now scopes the toFixed
-     claim to the snapped tiny path exactly as the big paths behave
-     (the Working Hands parked-note wording, rolled in this batch).
-   - Stamp to v10.45.
-   ================================================================ */
-
-/* ===== v10.44 — header wordmark badge: fussycat.app =============
-   - A second brand joins the header: the fussycat.app wordmark
-     badge (inline SVG, adapted from the homepage's markup — the
-     .app suffix enlarged from 92 to 120 units so it stays legible
-     at badge size), pushed to the
-     row's right edge with margin-left:auto. It links to
-     https://fussycat.app/ and, like every outbound link, travels
-     with target="_blank" rel="noopener noreferrer"; the page-wide
-     no-referrer policy means the click carries nothing about the
-     visitor. Banner carried per the v10.26 precedent: link
-     additions are structural, not copy.
-   - Sizing: height mirrors the FX CONVERT brand text's own clamps
-     (clamp(22px,3.4vw,32px), with the ≤640px tier matching the
-     header's media query), width auto by viewBox aspect — the
-     badge and the wordmark grow and shrink in lockstep at every
-     viewport, and the 5:1 proportion keeps the badge a modest
-     bar alongside the heavier lettering. The width/
-     height attributes are dropped: an explicit width pins the
-     intrinsic size and defeats the responsive CSS.
-   - The badge renders from system fonts (Archivo Black falling
-     back through Arial Black); nothing is fetched, so the CSP and
-     the single-file posture are untouched. The anchor's
-     aria-label carries the accessible name; the SVG stays
-     decorative. The badge joined the touch-action:manipulation
-     guard — it is a tappable control and the double-tap-zoom
-     canon applies (the .ccy v10.36 precedent, extended). No
-     animation, so prefers-reduced-motion needs no new rule.
-   ================================================================ */
-
-/* ===== v10.41 — paste-length cap sized to the honest ceiling =====
-   - Outside review flagged the amount field's missing input-length
-     limit: a megabyte paste parses into roughly one token object per
-     character or two, and millions of small objects are real memory
-     pressure on a phone. The narrower claims are overstated — the
-     tokenizer and parser are linear (no backtracking regexes;
-     parseExpr and parseTerm iterate), a pasted wall of minus signs
-     already dies fast in parseFactor's RangeError (logged since
-     v10.31), and an oversized number dies honestly at the
-     parseFloat/isFinite check. But the token-array buildup on a
-     single hostile paste is worth guarding, and the smallest tier
-     suffices: one maxlength attribute, no script machinery.
-   - The review's suggested 50-character cap is declined: ritual item
-     6 settles a 60-digit literal to full plain digits, and fmtPlain's
-     BigInt path legitimately writes up to ~309 plain digits plus
-     sign (a settled DBL_MAX-scale value expanded exactly) — the
-     input/output asymmetry is deliberate and the settle round-trip
-     is non-negotiable (anything the app writes must re-parse; HTML
-     value sanitization truncates programmatic assignment to
-     maxlength too, so a low cap would corrupt the app's own settle).
-     The cap is therefore sized to the app's own maximum write:
-     320 — 309 digits + sign + headroom. The 40-digit display-bound
-     ritual, the 60-digit huge settle and the astronomical plain-
-     digit settle all fit; hostile pastes do not.
-   - Record: at the cap, a pad-operator insert is dropped by UA
-     truncation — reachable only at pathological lengths, accepted.
-     Both card shapes carry the attribute: the legacy cards' shared
-     ioMarkup and the custom card's own input block.
-   ================================================================ */
-
-/* ===== v10.40 — custom menus: featured head, kitty separator ====
-   - The custom card's currency lists carried no design order: four
-     legacy codes, then majors, NZD riding the tail purely because
-     that is where the v10.36 restoration inserted it. The menus now
-     open with the featured pairs — the custom card's own USD→NZD
-     default, then the four legacy legs — derived from PAIRS so the
-     menu head and the carousel cannot drift apart.
-   - Behind them, a disabled, valueless "here kitty kitty" option
-     drawn by fillCcySelect separates the head from the rest, which
-     follows alphabetical order of country NAME rather than code
-     ("Chinese Yuan" ahead of "Danish Krone"; "Swedish Krona" ahead
-     of "Swiss Franc"). The separator is placed before the first
-     non-featured code and only when both sides of it survive the
-     source-driven menu cut; disabled keeps it unpickable and
-     skipped by keyboard navigation, and sel.value matches codes,
-     so the selection can never land on it.
-   - The head is not only presentation: refreshCustomMenu snaps an
-     unquotable from-selection to menu[0], and USD has opened the
-     pool since v10.36's first issuance, so the snap is preserved
-     exactly. NZD moves from the tail into the head; its presence
-     still guards the v10.36 lesson (the NZD snap branch dies
-     without it).
-   ================================================================ */
-
-/* ===== v10.39 — trail repair, select-settle symmetry, spoken msgs ==
-   - Version-trail repair (copy only): the v10.36 banner had gone
-     missing from the stack, leaving the custom-card work claimed by
-     both the in-code comments (v10.36) and the v10.37 banner. The
-     v10.36 banner is restored from the spec's changelog record and
-     the v10.37 banner trimmed to its own work — the reorder and the
-     removal of the fixed USD→NZD card. No code behaviour changed by
-     this part.
-   - Select-change settle symmetry (behavioural): both custom
-     selects' change handlers now clear the card's pending settle
-     timer, exactly as the swap handler has since v10.31. Typing a
-     formula then changing a currency fired the timer 1.2 s later;
-     the select lives inside the card, so v10.30's containment guard
-     passed and focus was yanked out of the select mid-interaction —
-     the same intra-card failure family the swap fix closed. The
-     typed value still carries across and the output still
-     recomputes; only the cosmetic settle rewrite waits for the next
-     edit.
-   - Spoken messages (accessibility): .calc-msg gains role="status"
-     in both card shapes, so "Cannot divide by zero" and the muted
-     hints reach screen readers — .out was already aria-live, but
-     the message channel was silent. showMsg() also unhides the
-     element before writing, so the text mutation lands in a visible
-     live region rather than resting on the unhide itself being
-     noticed.
-   - Adjudicated and declined this round, recorded for the trail:
-     Frankfurter's HTTP 422 on an unknown currency code (confirmed
-     from frankfurter.dev's own error table) would fail the whole
-     fallback rather than one leg, but the service advertises 223
-     currencies and every code the union can carry is a mainstream
-     one well inside that coverage; the failure is honest ("Rates
-     unavailable", retry invited) and changing the selection
-     rebuilds the union, so a coverage list or a retry tier would be
-     speculative machinery for an unobserved fault. from === to on
-     the custom card is left as-is: a 1:1 echo is arithmetically
-     true and either select can be changed. A browser without
-     AbortController lets a timed-out request run on; the promise
-     still rejects and the app behaves correctly, so tier zero.
-   ================================================================ */
-
-/* ===== v10.38 — maintenance sweep: honest fetch, dark UA =========
-   - Post-feature-freeze audit of v10.37: structural, security and
-     cosmetic. No new features; the app is declared complete.
-   - fetchJSON now sends cache: 'no-store'. The HTTP cache could
-     have served a stale payload under the "Live rates" label, and
-     in the offline rehearsal it could masquerade as a successful
-     fetch while the wire was down. Same keyless GETs to the same
-     two allow-listed hosts; only freshness is now guaranteed.
-   - color-scheme: dark declared on :root. The page is dark-only
-     but the UA was never told, so native control chrome — the
-     custom card's two select popups above all — could render in
-     the platform's light theme. The declaration steers popup
-     lists, scrollbars and any future form widget to the dark
-     palette.
-   - Comment hygiene: the .calc-msg.hint comment's red-reservation
-     list omitted divide-by-zero, the very message the base
-     .calc-msg rule colours red. Enumeration completed.
-   - Examined and declined this round, recorded for the trail:
-     URI-encoding the fallback quotes list (every code is an
-     internal constant, never user-composed); filtering the custom
-     menu on finiteness (a non-finite row already dies honestly at
-     computeCrossRate); merging the stacked CUSTOM_CURRENCIES
-     comments (distinct trails, no untruth); racing both sources
-     concurrently (breaks primary-first preference, doubles
-     upstream load). Frozen banners, the recorded short-viewport
-     pad limit, and the stage min-height stay untouched, per
-     convention.
-   ================================================================ */
-
-/* ===== v10.37 — custom card moved to the front ===================
-   - The custom-pairing card (built in v10.36, below) moved to the
-     carousel's first position, so it greets the user on load. The
-     former fixed USD→NZD card was removed as redundant — its pair
-     became the custom card's default. Four legacy pairs remain:
-     AUD→NZD, GBP→NZD, EUR→NZD, ZAR→NZD.
-   - Otherwise cosmetic: stale counts ("five" → "four") corrected
-     in comments and in this stack. No intermediate bump.
-   ================================================================ */
-
-/* ===== v10.36 — custom-pairing card ==============================
-   - A custom-pairing card joins the carousel: two native currency
-     selects in place of the static code spans, composing any pair
-     from a curated 22-code pool (menus read "CODE — Name", so the
-     picker teaches while it offers). Native selects buy keyboard
-     support, mobile pickers and accessibility without new
-     machinery.
-   - computeCrossRate generalizes computeRate: units-of-to per
-     unit-of-from, same quotient-of-per-base algebra. The legacy
-     cards pass (other, NZD), reducing to the previous computation
-     exactly. A source never quotes its own base, so the declared
-     base is read as 1.
-   - Sanity bounds widened 0.02-6.0 to 0.00001-100,000
-     (adjudicated): the originals were calibrated for NZD-relative
-     legs, while legitimate cross-rates span far wider (KWD/VND
-     ~84,000, JPY/IDR ~0.00012). Per-leg honesty carries the burden
-     now: a missing or non-number quote yields "Rate unavailable",
-     never a substituted figure.
-   - The custom card's rate multiplies the amount (updateOutput);
-     legacy division is untouched. Selection change and swap both
-     route through recomputeCustom before re-render, so no
-     stale-pair figure can render.
-   - Menus are cut against what the serving source actually quotes
-     (refreshCustomMenu, run before rate computation in applyRates —
-     an execution-order dependency: the rate must reflect the
-     snapped pair, not the pre-snap one). Selections survive where
-     they do; snaps go to menu[0] for the from side, NZD for the to
-     side. Known limit, recorded: under the Frankfurter fallback the
-     menu narrows to the quoted codes; an unquotable currency is
-     simply not offered.
-   - The fallback URL is built per refresh attempt (getFallbackUrl):
-     NZD + the four legacy pairs + both current custom selections,
-     deduplicated, minus the base. Exotic legs stay quotable when
-     Frankfurter serves, and the legacy codes stay in the union so
-     the hardcoded cards cannot go dark by omission.
-   - Select keydown stops ArrowLeft/Right from bubbling to the
-     stage's carousel listener (the amount input's edge-guard
-     lesson, applied to a new element that owns its arrows), and
-     touch-action:manipulation extends to .ccy per the v10.32 rule:
-     a select is a tappable control.
-   - NZD restored to CUSTOM_CURRENCIES after outside review caught
-     its absence: the array's comment claimed it belonged, the names
-     map carried it, and refreshCustomMenu's NZD snap branch was
-     unreachable without it, silently collapsing the booted USD→NZD
-     default to USD→USD on the first successful applyRates. Fixed
-     inside the same unpublished batch, no extra bump.
-   ================================================================ */
-
-/* ===== v10.32 — IME re-raise on pad close ========================
-   - Closing the calculator pad re-raised the Android soft
-     keyboard the user had just lowered. Root cause, established
-     by field test: a tap landing while the amount field still
-     holds focus re-raises the IME, and both closing controls —
-     the checkmark key and the calc button — carry mousedown
-     preventDefault precisely to keep focus in the input, so
-     focus survived the closing tap. Outside-tap closes never
-     popped the keyboard because focus falls away naturally.
-     Both close gestures now blur the amount field at mousedown
-     on coarse-pointer devices (pointer: coarse), mirroring the
-     outside tap; desktop focus retention is untouched.
-   - onPopKey also now receives the activation origin
-     (MouseEvent.detail via the delegated click) and refocuses
-     only for keyboard activation (detail 0) — focus would
-     otherwise strand on the hidden button for Enter/Space users.
-     Settle timers need no special handling: after the blur, the
-     v10.30 containment guard fails and no reclaim occurs, while
-     the value still settles on its own clock.
-   - evaluate()'s catch no longer logs 'incomplete' or 'syntax':
-     parseFactor throws both as control flow on every keystroke
-     that leaves a trailing or doubled operator, so the v10.31
-     logging fired on ordinary typing — console noise on the
-     hottest path in the app. Unexpected errors (the minus-wall
-     RangeError) still log.
-   - touch-action: manipulation on all tappable controls (buttons,
-     nav arrows, swap, calc, pad keys): rapid tapping in the pad is
-     the precise gesture that triggers iOS Safari's double-tap
-     zoom; the guard removes it without affecting page pinch-zoom.
-     From the same outside review: Frankfurter v2's flat-row shape
-     is now doc-confirmed (frankfurter.dev guides), not
-     field-test-only — no code change, recorded for the trail.
-   ================================================================ */
-
-/* ===== v10.31 — honest feedback batch ============================
-   - Space-separated numbers ("1 234.56") used to fail in total
-     silence: the tokenizer skipped whitespace, parseExpr stopped
-     early, and evaluate returned neither ok nor bad, so the output
-     blanked with no hint — the only input class that failed
-     without a word. tokenize() now rejects a number token directly
-     following another number token — reachable only through
-     intervening whitespace — routing it through the existing bad
-     flag and the muted invalid-character hint. The hint text stays
-     as-is: a space is indeed outside the advertised set, even
-     though the tokenizer tolerates it around operators.
-   - Swap-button settle steal (tokenize's sibling in settleNow's
-     orbit): a settle timer surviving a click on the swap button —
-     which lives in the centred card, so v10.30's containment guard
-     passes — still yanked focus to the input 1.2 s later. The swap
-     handler now clears the card's timer. The typed value carries
-     across the swap either way and updateOutput computes from the
-     raw text, so the only cost is the formula staying unsimplified
-     until the next edit. The calc button needs nothing: its
-     mousedown is preventDefault, so focus never leaves the input.
-   - evaluate()'s catch now logs non-div0 errors to console:
-     parseFactor's unary recursion can throw RangeError on a pasted
-     wall of minus signs, which formerly vanished without a trace.
-   - Declined from the same outside review, recorded for the trail:
-     retaining last-good rates on both-sources failure (design
-     posture — outputs clear without live rates; staleness would be
-     unbounded), the x/X to × rewrite (spec'd feature), and the
-     gem/beacon SVG dimension pairs' ~1% aspect drift (invisible,
-     tier zero).
-   ================================================================ */
-
-/* ===== v10.30 — settle focus containment + signature reword ======
-   - settleNow() focus reclaim tightened. A settle timer surviving
-     a click on a control outside the card (realistically Update
-     Rates, the only such control) used to yank focus back to the
-     amount field mid-interaction, landing keystrokes meant for
-     the button. Focus now reclaims only when the centred card
-     contains document.activeElement: card-level containment, not
-     input-level, so focus inside the calculator pad (which lives
-     in the card) still reclaims. Two guards now stand and are
-     named: centred-card and containment. This resolves the known
-     limit recorded and declined at v10.29.
-   - Footer copy only: signature reworded "Made by" to
-     "Made with" (Lumo AI attribution).
-   ================================================================ */
-
-/* ===== v10.28 — keypad compaction (container only) ===============
-   - On short viewports the pad's drop from the card's foot
-     spilled past the stage's overflow:hidden edge, costing it
-     its bottom padding to the clip. The container is trimmed —
-     48px keys, 5px gaps, 7px padding — recovering ~7px of
-     height, which should pull the clipped padding back inside
-     on the displays that clipped. Keys keep their 40px touch
-     height and 18px glyphs: only the container tightened.
-   - Honest limit, recorded rather than solved: on sufficiently
-     short viewports the pad can still clip. A flip-away guard
-     was considered and deferred — measured, not needed yet.
-   ================================================================ */
-
-/* ===== v10.27 — display bound on colossal outputs ==============
-   - v10.26 taught the app to speak when a result overflowed the
-     double range, but a merely enormous finite result (a 40-digit
-     amount times nine, say) still rendered as a wall of 30px
-     digits. The card grew, the absolutely-positioned calculator
-     pad rode down with it, and the stage's overflow:hidden edge
-     sliced the pad in half.
-   - updateOutput() now declines to render a converted figure at or
-     above 1e21, showing the same muted "Result too large" hint
-     instead. 1e21 is the landmark the settle code already knows:
-     it is where JS itself abandons plain notation. The input still
-     settles to plain digits — fmtPlain is untouched, so the BigInt
-     round-trip guard keeps its teeth; only the output declines.
-   - Red stays reserved for divide-by-zero; this rides the quiet
-     channel, like the invalid-character hint.
-   ================================================================ */
-
-/* ===== v10.26 — review batch: attribution, focus, honest hints ==
-   - Focus retention: navigating away from a card whose input held
-     focus inerted the outgoing card and the browser relocated
-     focus to <body>, killing arrow-key navigation until the user
-     clicked or tabbed. layout() now redirects focus to the newly
-     centred card's input whenever the previously focused element
-     lived in a card that just went inert.
-   - Overflow hint (evaluate, updateOutput): a finite-operand
-     expression whose result exceeds the double range (e.g. two huge
-     literals multiplied) used to go blank with no message; it now
-     shows the muted "Result too large" hint — red stays reserved
-     for divide-by-zero.
-   - Frankfurter v2 diagnostics (refreshRates adapter, computeRate
-     interplay): malformed rate rows are counted and logged
-     distinctly instead of surfacing later as a misleading
-     "missing a quote" warning.
-   - Calculator pad no longer closes on clicks inside the amount
-     field (caret repositioning mid-formula).
-   - Footer: Exchange Rate API credit added alongside Catnip &
-     Privacy Policy (attribution required by the open endpoint's
-     terms), signature reworded to "Made by", footer text resized,
-     referrer set to no-referrer.
-   ================================================================ */
-
-/* ===== v10.23 — exponent-free settling completed at magnitude ==
-   - v10.22 closed the tiny side of the settle round-trip but its
-     large paths still emitted exponent form: toFixed() defers to
-     exponential notation at 1e21 and above, so both the overflow
-     fallback and the |r| >= 1 branch handed back "1e+300"-style
-     strings the tokenizer rejects. Both paths now expand the exact
-     integer via BigInt — every double >= 2^52 is integer-valued,
-     and BigInt predates inert in browser support, so the app's
-     floor already covers it. Astronomical results now fill the
-     input with plain digits: honest, occasionally long.
-   ================================================================ */
-
-/* ===== v10.22 — fallback hardening: honest wording, uniform base ==
-   - The both-sources-failed message no longer blames the connection:
-     a malformed or empty fallback response also routes here, so the
-     status line now just invites a retry and asserts nothing about
-     the cause. (Console warn still carries the real reason.)
-   - The Frankfurter adapter now insists the rows declare the base we
-     asked for (EUR), rejecting a reshaped response loudly with a
-     precise console reason instead of adapting to it. The unused
-     --gold token was retired from :root in passing.
-   - fmtPlain no longer emits exponent form (5e-7, 1e+300) when a
-     settled value is tiny or astronomical: the tokenizer rejects
-     the 'e', so a value the app itself settled would resurface as
-     the invalid-character hint. Plain-digit expansion keeps the
-     settle round-trip re-parseable.
-   ================================================================ */
-
-/* ===== v10.21 — Frankfurter fallback moved to the v2 API ========
-   - v1 (api.frankfurter.app) is deprecated upstream; the fallback
-     now calls https://api.frankfurter.dev/v2/rates, quoting exactly
-     the currencies the carousel needs. v2 returns a flat array of
-     {date, base, quote, rate} rows instead of v1's {base, rates}
-     map, so a small adapter folds the rows into the per-base map
-     the conversion engine already reads. The declared base comes
-     from the rows themselves and is still read as 1, so EUR/NZD
-     keeps working when the fallback serves the rates.
-   - CSP connect-src follows the host change (api.frankfurter.dev).
-   ================================================================ */
-
-/* ===== v10.20 — gem-cut beacon marks the active card =============
-   - Decorative chevron pinned to the stage's top centre, cut from
-     the footer heart's own recipe: deepest-tone silhouette behind
-     tonal-step matte facets, hard-cut outline, miter joins — plus a
-     bevelled keel ridge running down to the point. A gold spark
-     twinkles at its tip on the same .spk clock the heart's
-     orbiters keep, and the whole marker bobs gently, holding still
-     under prefers-reduced-motion like every other moving part.
-   - Layering: z-index 25 sits above the cards (whose stacking tops
-     out near 10) but below the nav arrows (30) and keypad (40); the
-     beacon is pointer-events:none and aria-hidden, so it points at
-     the centred card without taking a click or a screen-reader
-     announcement away from it.
-   ================================================================ */
-
-/* ===== v10.18 — honest small-change formatting ==================
-   - fmtMoney() now scales fraction digits with magnitude (2, 4 or
-     6 places) instead of the old flat 2-or-4 split, and falls back
-     to significant-digit formatting whenever fixed-point rounding
-     would still render a nonzero result as "0". Small outputs are
-     at worst imprecise, never wrong; ordinary amounts (>= 1) are
-     formatted exactly as before.
-   ================================================================ */
-
-/* ---------------- constants ---------------- */
 const NZD = 'NZD';
 const NZD_NAME = 'New Zealand Dollar';
-/* v10.37 — USD→NZD moved to the custom card's default; the
-   hardcoded pairs now start at AUD. The custom card becomes
-   the carousel's first entry, so it greets the user on load */
 const PAIRS = [
   ['AUD','Australian Dollar'],
   ['GBP','British Pound'],
@@ -1093,27 +411,9 @@ const PAIRS = [
   ['ZAR','South African Rand']
 ];
 const SETTLE_MS = 1200;
-/* v10.36 — bounds widened for cross-rate pairs (adjudicated this
-   round). The originals (0.02-6.0) were calibrated for NZD-relative
-   legs among the four hardcoded pairs; arbitrary cross-rates
-   legitimately span far wider ranges (KWD/VND ~84,000, JPY/IDR
-   ~0.00012). The new range (0.00001-100,000) covers every
-   legitimate pair while still catching catastrophic API garbage.
-   Per-leg honesty is unchanged: a missing or non-number quote still
-   yields "Rate unavailable", never a substituted figure. Applies to
-   the four legacy cards too; no legitimate NZD pair ever sat near
-   the old ceiling anyway */
 const BOUND_LO = 0.00001, BOUND_HI = 100000;
 const PRIMARY_URL  = 'https://open.er-api.com/v6/latest/USD';
 const FALLBACK_BASE = 'EUR';
-/* v10.36 — the fallback URL is now built per refresh attempt, so it
-   can carry the custom card's current selections alongside the four
-   legacy pairs. Quoting set: NZD + every PAIRS code + both custom
-   selections, deduplicated, minus the base itself (a source never
-   quotes its own base; computeCrossRate reads it as 1). Without the
-   custom legs here, an exotic selection would go dark whenever the
-   fallback served — and without the legacy codes, so would the four
-   hardcoded cards, which is why they stay in the union */
 function getFallbackUrl(fromCcy, toCcy){
   const wanted = new Set([NZD].concat(PAIRS.map(p => p[0])));
   if (fromCcy) wanted.add(fromCcy);
@@ -1124,28 +424,7 @@ function getFallbackUrl(fromCcy, toCcy){
 }
 const PRIMARY_MS = 12000, FALLBACK_MS = 8000;
 const NUM = /[0-9.]/;
-/* v10.36 — curated pool for the custom-pairing card's two menus.
-   The primary source quotes ~160 codes; a 160-option native select
-   is hostile on a phone, so the menus offer this curated subset
-   instead, intersected with whatever the serving source actually
-   quotes (refreshCustomMenu does that cut at applyRates time).
-   NZD belongs here: it is a valid leg of a custom pair */
-/* v10.40 — featured head: the custom card's USD→NZD default plus the
-   four legacy legs, derived from PAIRS so the menu head and the
-   carousel can never drift apart. The head is not only presentation:
-   refreshCustomMenu snaps an unquotable from-selection to menu[0],
-   and USD has opened the pool since v10.36's first issuance, so
-   leading with USD preserves that snap exactly. NZD formerly rode
-   the tail — no order was intended by it, only the v10.36
-   restoration's insertion point; it now sits second in the head,
-   and its presence still guards the v10.36 lesson: the NZD snap
-   branch in refreshCustomMenu dies without it */
 const FEATURED_CURRENCIES = ['USD', NZD].concat(PAIRS.map(p => p[0]));
-/* v10.40 — the remainder, alphabetical by country NAME rather than
-   code ("Chinese Yuan" ahead of "Danish Krone"; "Swedish Krona"
-   ahead of "Swiss Franc"). Keep this ordering when a code joins
-   the pool. fillCcySelect separates the two groups with a
-   disabled "here kitty kitty" option */
 const CUSTOM_CURRENCIES = FEATURED_CURRENCIES.concat([
   'CAD','CNY','DKK','HKD','INR','IDR','JPY','MYR','MXN',
   'NOK','PLN','SGD','KRW','SEK','CHF','THB'
@@ -1164,23 +443,19 @@ const updBtn     = document.getElementById('updbtn');
 const statusWrap = document.getElementById('statusWrap');
 const statusText = document.getElementById('statusText');
 const statusDot  = document.getElementById('statusDot');
-/* touch-device gate: on a phone, closing the pad must let focus fall
-   away from the amount field or the closing tap re-raises the IME */
 const COARSE = window.matchMedia ? window.matchMedia('(pointer: coarse)').matches : false;
 
-let state = null;        /* { base, rates, label } or null */
+let state = null;
 let busy = false;
 let index = 0;
 const cards = [];
 
-/* ---------------- status helpers ---------------- */
 function setStatus(text, dotClass){
   statusText.textContent = text;
   statusWrap.classList.toggle('err', dotClass === 'bad');
   statusDot.className = 'dot ' + dotClass;
 }
 
-/* ---------------- safe expression parser ---------------- */
 const DIV0 = {div0:true};
 
 function tokenize(src){
@@ -1199,11 +474,6 @@ function tokenize(src){
       if ((ns.match(/\./g) || []).length > 1) throw new Error('malformed number "' + ns + '"');
       const v = parseFloat(ns);
       if (!isFinite(v)) throw new Error('malformed number "' + ns + '"');
-      /* a number directly following another number is reachable only
-         through intervening whitespace — a thousands-grouping space
-         ("1 234.56") — which used to parse as two tokens, fail the
-         completeness check, and blank the output with no hint. Reject
-         it here so it rides the bad flag and the existing hint */
       if (toks.length && toks[toks.length - 1].t === 'num'){
         throw new Error('space-separated number "' + ns + '"');
       }
@@ -1245,10 +515,6 @@ function parseFactor(tk){
   throw new Error('syntax');
 }
 
-/* evaluate -> {ok, value, complete, hasOp, div0, bad, overflow}
-   bad = tokenizer rejection (invalid character / malformed number /
-   space-separated number): grounds for a gentle hint, unlike a
-   still-cooking expression */
 function evaluate(src){
   const out = {ok:false, value:NaN, complete:false, hasOp:false, div0:false, bad:false, overflow:false};
   const s = String(src == null ? '' : src).trim();
@@ -1257,13 +523,11 @@ function evaluate(src){
   try { toks = tokenize(s); }
   catch(e){ out.bad = true; return out; }
   if (!toks.length) return out;
-  /* an operator beyond the lead position makes it a formula; a lone
-     unary sign (as in "-5") is just a number and must not auto-settle */
   out.hasOp = toks.some((t, idx) => t.t !== 'num' && idx > 0);
   const ctx = {toks, pos:0};
   try {
     const v = parseExpr(ctx);
-    if (ctx.pos !== toks.length) return out; /* trailing operator: incomplete */
+    if (ctx.pos !== toks.length) return out;
     if (!isFinite(v)){
       if (v === Infinity || v === -Infinity) out.overflow = true;
       return out;
@@ -1271,13 +535,6 @@ function evaluate(src){
     out.ok = true; out.value = v; out.complete = true;
   } catch(e){
     if (e && e.div0) out.div0 = true;
-    /* 'incomplete' and 'syntax' are the parser's own control flow —
-       parseFactor throws them on every keystroke that leaves a
-       trailing or doubled operator while the expression cooks — so
-       they must not reach the log. Everything else (a RangeError
-       from parseFactor's unary recursion on a pasted wall of minus
-       signs, say) used to vanish: output blank, no hint, no trace.
-       Log that so the failure is at least diagnosable */
     else if (!(e instanceof Error && (e.message === 'incomplete' || e.message === 'syntax'))){
       console.warn('[FX Convert] evaluate: ' + (e && e.message ? e.message : e));
     }
@@ -1285,42 +542,19 @@ function evaluate(src){
   return out;
 }
 
-/* ---------------- formatting ---------------- */
 function fmtPlain(v){
-  /* String() slips into exponent form above ~1e21 and below 1e-6,
-     and the tokenizer rejects the 'e' — a settled value the app
-     itself wrote would resurface as the invalid-character hint.
-     Expand to plain digits instead. The 1e-10 snap (the Math.round
-     line below) puts every finite result on the 10-decimal grid
-     before any formatting, so toFixed — reached only for tiny
-     values already snapped — never rounds a lie into the figure;
-     the big paths never reach toFixed at all, expanding exact
-     integers via BigInt instead */
   const r = Math.round(v * 1e10) / 1e10;
-  /* 1e-10 rounding overflowed; v itself is a finite, integer-valued
-     double this big, so BigInt expands it to plain digits exactly */
   if (!isFinite(r)) return String(BigInt(v));
   const s = String(r);
   if (!s.includes('e')) return s;
-  /* |r| >= 1 with an 'e' means r >= 1e21, where toFixed() itself
-     defers to exponential form; BigInt expands the exact integer
-     instead (every double >= 2^52 is integer-valued, so this
-     cannot throw) */
   return (Math.abs(r) >= 1) ? String(BigInt(r)) : r.toFixed(10);
 }
 function fmtMoney(v){
   if (!isFinite(v)) return '';
   if (v === 0) return v.toLocaleString('en-NZ', {maximumFractionDigits: 2});
-  /* fraction digits scale down with magnitude: two places from a
-     dollar down, four from a cent down, six below that. Maximum
-     (not minimum) counts keep tidy results uncluttered. */
   const abs = Math.abs(v);
   const digs = (abs >= 1) ? 2 : (abs >= 0.01 ? 4 : 6);
   let s = v.toLocaleString('en-NZ', {maximumFractionDigits: digs});
-  /* honesty guard: if fixed-point rounding still swallowed the
-     figure entirely (a nonzero result displaying as "0"), retreat
-     to significant digits so something truthful survives — the
-     same principle as "Rate unavailable": never show a false zero */
   if (parseFloat(s.replace(/[^0-9.\-]/g, '')) === 0){
     s = v.toLocaleString('en-NZ', {maximumSignificantDigits: 3});
   }
@@ -1331,7 +565,6 @@ function hhmm(d){
   return p(d.getHours()) + ':' + p(d.getMinutes());
 }
 
-/* ---------------- card construction ---------------- */
 const CARD_SVG_CALC =
   '<svg width="20" height="20" viewBox="0 0 20 20" aria-hidden="true">' +
     '<rect x="2" y="2" width="16" height="16" rx="3" fill="none" stroke="currentColor" stroke-width="1.6"/>' +
@@ -1345,11 +578,6 @@ const CARD_SVG_CALC =
   '</svg>';
 
 function buildCard(pair, opts){
-  /* v10.36 — opts is optional. Absent: the legacy [code, name] pair.
-     Present with opts.custom: the custom-pairing card, whose two
-     currencies arrive as fromCcy/toCcy and live in native selects
-     rather than static spans. Native selects buy keyboard support,
-     mobile pickers and accessibility without new machinery */
   const isCustom = !!(opts && opts.custom);
   const other = isCustom ? null : pair[0];
   const name  = isCustom ? null : pair[1];
@@ -1359,18 +587,9 @@ function buildCard(pair, opts){
   const el = document.createElement('article');
   el.className = 'card';
 
-  /* the shared io block; the custom card inserts the same labels,
-     with spans the render pass fills — the whole-sale textContent
-     writes of the legacy path would destroy them */
-  /* v10.39 — the message div is a live region in both card shapes:
-     without role="status" a screen reader never hears "Cannot divide
-     by zero" or the quieter hints, though .out was already aria-live */
   const ioMarkup =
     '<div class="lbl lbl-in"></div>' +
     '<div class="inrow">' +
-      /* v10.41 — paste cap sized for fmtPlain's largest honest write:
-         ~309 plain digits (DBL_MAX via BigInt) plus sign, headroom
-         above that. Below it nothing; hostile pastes clamp here */
       '<input class="amt" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" maxlength="320" placeholder="0" aria-label="Amount">' +
       '<button class="calc-btn" type="button" aria-label="Calculator">' + CARD_SVG_CALC + '</button>' +
     '</div>' +
@@ -1380,19 +599,12 @@ function buildCard(pair, opts){
 
   if (isCustom){
     el.innerHTML =
-      /* v10.48 — the customisable tag and its bulb are retired: the
-         tag made this card taller than every legacy card, and its
-         calculator pad clipped at the stage edge on real displays.
-         The dropdowns carry the affordance alone now. The labels
-         below keep their span-based rendering untouched */
       '<div class="pair from"><select class="ccy from-ccy" aria-label="From currency"></select></div>' +
       '<button class="swap" type="button" aria-label="Reverse direction">\u21c4</button>' +
       '<div class="pair to"><select class="ccy to-ccy" aria-label="To currency"></select></div>' +
       '<div class="io">' +
         '<div class="lbl lbl-in">Amount in <span class="x-display"></span></div>' +
         '<div class="inrow">' +
-          /* same v10.41 paste cap as the ioMarkup input above, and for
-             the same reason — the custom card sets its own markup */
           '<input class="amt" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" maxlength="320" placeholder="0" aria-label="Amount">' +
           '<button class="calc-btn" type="button" aria-label="Calculator">' + CARD_SVG_CALC + '</button>' +
         '</div>' +
@@ -1412,10 +624,10 @@ function buildCard(pair, opts){
 
   const card = {
     el,
-    custom: isCustom,      /* v10.36 — gates the custom code paths */
+    custom: isCustom,
     other, otherName: name,
-    dir: isCustom ? null : 'otherToNzd',  /* source currency is the non-NZD leg */
-    rate: null,            /* custom: units of to per from; legacy: NZD per other */
+    dir: isCustom ? null : 'otherToNzd',
+    rate: null,
     timer: null,
     fromCcy, toCcy,
     fromSel:  isCustom ? el.querySelector('.from-ccy') : null,
@@ -1435,26 +647,15 @@ function buildCard(pair, opts){
     popSlot:  el.querySelector('.pop-slot')
   };
 
-  /* provisional menus so the card is usable the moment it paints;
-     applyRates re-cuts them against what the winning source quotes */
   if (isCustom){
     fillCcySelect(card.fromSel, CUSTOM_CURRENCIES, fromCcy);
     fillCcySelect(card.toSel, CUSTOM_CURRENCIES, toCcy);
   }
 
   el.querySelector('.swap').addEventListener('click', () => {
-    closePop(); /* the pad closes on swap, per spec */
-    /* a settle timer surviving this click used to fire 1.2 s later
-       and, the swap button living in the centred card, containment
-       passed and focus yanked to the input mid-interaction. Clearing
-       is enough: the typed value carries across the swap and
-       updateOutput computes from the raw text, so only the cosmetic
-       settle rewrite waits for the next edit */
+    closePop();
     if (card.timer){ clearTimeout(card.timer); card.timer = null; }
     if (card.custom){
-      /* v10.36 — the custom card's swap trades the two selections;
-         the rate must be recomputed here, not left at the previous
-         pair's figure */
       const tmp = card.fromCcy;
       card.fromCcy = card.toCcy;
       card.toCcy = tmp;
@@ -1463,20 +664,10 @@ function buildCard(pair, opts){
       card.dir = (card.dir === 'otherToNzd') ? 'nzdToOther' : 'otherToNzd';
     }
     render(card);
-    updateOutput(card); /* typed value carries across */
+    updateOutput(card);
   });
 
   if (isCustom){
-    /* v10.36 — a selection change recomputes the rate immediately.
-       Menus only offer currencies the serving source quotes, so no
-       refresh-on-change dance is needed: an unquotable currency
-       simply isn't on the menu */
-    /* v10.39 — and it clears the card's pending settle timer, as the
-       swap handler has since v10.31: the select lives inside the
-       card, so v10.30's containment guard passes and the timer used
-       to yank focus out of the select 1.2 s after the change. The
-       typed value still carries across and the output still
-       recomputes; only the cosmetic settle rewrite waits */
     card.fromSel.addEventListener('change', () => {
       if (card.timer){ clearTimeout(card.timer); card.timer = null; }
       card.fromCcy = card.fromSel.value;
@@ -1491,11 +682,6 @@ function buildCard(pair, opts){
       render(card);
       updateOutput(card);
     });
-    /* ArrowLeft/Right inside a select change the selection natively,
-       and the keydown would otherwise bubble to the stage's carousel
-       listener and slide the stage mid-selection — the same leak the
-       amount input guards against at its text edges, closed here
-       for the selects wholesale */
     const stopStageArrows = e => {
       if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') e.stopPropagation();
     };
@@ -1506,12 +692,6 @@ function buildCard(pair, opts){
   card.amt.addEventListener('input', () => { onAmountInput(card); });
   card.amt.addEventListener('keydown', e => {
     if (e.key === 'Enter'){ e.preventDefault(); settleNow(card); return; }
-    /* arrows keep the caret while it can still move inside the text;
-       once parked at an edge they bubble up to the stage's keydown
-       and drive the carousel. The edge test must live on keydown
-       itself: the carousel listens on keydown, so stopping a later
-       keyup (as v10.14 did) still let every arrow both move the
-       caret and slide the stage. */
     if (e.key === 'ArrowLeft' || e.key === 'ArrowRight'){
       const len = card.amt.value.length;
       const pos = card.amt.selectionStart;
@@ -1521,9 +701,6 @@ function buildCard(pair, opts){
   });
 
   card.calcBtn.addEventListener('click', () => { togglePop(card); });
-  /* mousedown.preventDefault keeps focus in the input (never steals focus) —
-     except on a touch device closing an already-open pad: focus falls away
-     from the amount field so the closing tap cannot re-raise the IME */
   card.calcBtn.addEventListener('mousedown', e => {
     if (COARSE && openCard === card && !pop.hidden){ card.amt.blur(); return; }
     e.preventDefault();
@@ -1532,12 +709,8 @@ function buildCard(pair, opts){
   return card;
 }
 
-/* draw direction: codes, names, labels, accessible name */
 function render(card){
   if (card.custom){
-    /* v10.36 — the custom card draws from its two selections. The
-       labels are set via their inner spans only: lblIn.textContent
-       would destroy the span the next pass tries to fill */
     card.xDisplay.textContent = card.fromCcy;
     card.yDisplay.textContent = card.toCcy;
     card.fromSel.value = card.fromCcy;
@@ -1563,12 +736,10 @@ function render(card){
   }
 }
 
-/* ---------------- conversion output ---------------- */
 function clearOut(card){
   card.out.textContent = '';
   card.out.classList.remove('na');
 }
-/* returns the evaluation result so callers never re-parse the same text */
 function updateOutput(card){
   const raw = card.amt.value;
   const ev = evaluate(raw);
@@ -1578,31 +749,20 @@ function updateOutput(card){
 
   if (ev.div0){ showMsg(card, 'Cannot divide by zero'); clearOut(card); return ev; }
   if (ev.overflow){ showMsg(card, 'Result too large', 'hint'); clearOut(card); return ev; }
-  /* quiet guidance for invalid characters: muted tone, never alarm red */
   if (ev.bad){ showMsg(card, 'Numbers and + \u2212 \u00d7 \u00f7 only', 'hint'); clearOut(card); return ev; }
-  if (!(ev.ok && ev.complete)){ clearOut(card); return ev; } /* expression still cooking */
+  if (!(ev.ok && ev.complete)){ clearOut(card); return ev; }
 
   if (card.rate == null){
     if (state == null){
-      clearOut(card); /* no figures without live rates */
+      clearOut(card);
     } else {
       card.out.textContent = 'Rate unavailable';
       card.out.classList.add('na');
     }
     return ev;
   }
-  /* v10.36 — the custom card's rate is units-of-to per unit-of-from,
-     so it always multiplies; legacy cards store NZD-per-other and
-     divide when the direction flips. Getting this backwards inverts
-     every custom conversion */
   const conv = card.custom ? ev.value * card.rate
     : (card.dir === 'otherToNzd') ? ev.value * card.rate : ev.value / card.rate;
-  /* finite results at or above 1e21 are computable but display-hostile:
-     a wall of digits grows the card and shoves the calculator pad past
-     the stage's overflow:hidden edge. 1e21 is where JS itself abandons
-     plain notation, and it sits ~8 orders of magnitude above any sane
-     conversion. The input still settles to plain digits (fmtPlain is
-     untouched); only the output declines to render the figure. */
   if (Math.abs(conv) >= 1e21){ showMsg(card, 'Result too large', 'hint'); clearOut(card); return ev; }
   card.out.textContent = fmtMoney(conv);
   card.out.classList.remove('na');
@@ -1610,39 +770,25 @@ function updateOutput(card){
 }
 
 function showMsg(card, text, kind){
-  /* v10.39 — unhide before writing: the message div is a live region
-     (role="status"), and the text mutation should land in a visible
-     region rather than resting on the unhide itself being announced */
   card.msg.hidden = false;
   card.msg.className = 'calc-msg' + (kind ? ' ' + kind : '');
   card.msg.textContent = text;
 }
 function hideMsg(card){ card.msg.hidden = true; card.msg.textContent = ''; }
 
-/* ---------------- auto-settle after typing an expression ---------------- */
 function onAmountInput(card){
   if (card.timer){ clearTimeout(card.timer); card.timer = null; }
-  const ev = updateOutput(card); /* one parse feeds both output and settle logic */
+  const ev = updateOutput(card);
   if (ev.ok && ev.complete && ev.hasOp){
-    /* hand the settled parse through, so the timer never re-tokenises */
     card.timer = setTimeout(() => settleNow(card, ev), SETTLE_MS);
   }
 }
 
 function settleNow(card, ev){
   if (card.timer){ clearTimeout(card.timer); card.timer = null; }
-  if (!ev) ev = evaluate(card.amt.value); /* Enter path: parse fresh */
+  if (!ev) ev = evaluate(card.amt.value);
   if (ev.ok && ev.complete && ev.hasOp){
     card.amt.value = fmtPlain(ev.value);
-    /* the value settles wherever it lives, but focus only follows
-       the centred card: a settle timer surviving carousel travel
-       used to yank focus back to a dimmed, off-stage card. Since
-       v10.30 a second condition applies, containment: a timer
-       surviving a click on a control outside the card (Update
-       Rates) must not yank focus back either, so focus reclaims
-       only when the card holds document.activeElement. The
-       calculator pad lives in the card, so focus there still
-       reclaims */
     if (cards[index] === card && card.el.contains(document.activeElement)){
       card.amt.focus();
       try { card.amt.setSelectionRange(card.amt.value.length, card.amt.value.length); } catch(err){}
@@ -1653,7 +799,6 @@ function settleNow(card, ev){
   }
 }
 
-/* ---------------- calculator popover ---------------- */
 const pop = document.createElement('div');
 pop.className = 'calc-pop';
 pop.hidden = true;
@@ -1662,23 +807,18 @@ POP_KEYS.forEach(k => {
   const b = document.createElement('button');
   b.type = 'button';
   b.textContent = k;
-  b.dataset.k = k; /* delegated handlers below read this */
+  b.dataset.k = k;
   if (k === '\u2713'){ b.className = 'ok'; b.setAttribute('aria-label', 'Close calculator'); }
   if (k === 'C'){ b.className = 'cls'; b.setAttribute('aria-label', 'Clear amount'); }
   pop.appendChild(b);
 });
 let openCard = null;
 
-/* two delegated listeners replace a dozen per-key attachments */
 pop.addEventListener('mousedown', e => {
   const b = e.target.closest('button');
   if (!b) return;
-  /* ✓ on a touch device closes the pad: drop focus from the amount
-     field at mousedown, before the closing tap can be read as
-     interaction with a focused editable, so the Android IME stays
-     down — the outside-tap close never pops it; this now mirrors it */
   if (COARSE && b.dataset.k === '\u2713'){ if (openCard) openCard.amt.blur(); return; }
-  e.preventDefault(); /* focus stays in input */
+  e.preventDefault();
 });
 pop.addEventListener('click', e => {
   const b = e.target.closest('button');
@@ -1710,15 +850,10 @@ function onPopKey(k, detail){
     return;
   }
   if (k === '\u2713'){
-    /* close only: formulas settle by themselves (auto-calc + Enter).
-       Refocus only for keyboard activation (detail 0): on touch the
-       blur at mousedown has already dropped focus, and restoring it
-       here would re-raise the Android IME the user just dismissed */
     closePop();
     if (detail === 0) inp.focus();
     return;
   }
-  /* operator insert at caret; the key glyph is already the display form */
   inp.focus();
   const a = (typeof inp.selectionStart === 'number') ? inp.selectionStart : inp.value.length;
   const b = (typeof inp.selectionEnd === 'number') ? inp.selectionEnd : a;
@@ -1735,23 +870,14 @@ document.addEventListener('keydown', e => {
   if (!pop.hidden && e.key === 'Escape'){ closePop(); }
 });
 
-/* ---------------- carousel ---------------- */
-/* card width changes only with the viewport (min(340px,84vw)), so it is
-   measured once at boot and again on resize; layout() used to force a
-   reflow reading offsetWidth on every carousel step */
-/* v10.49 — the card gap lives here once: layout() and the stage
-   click handler both read CARD_GAP, so the slot arithmetic cannot
-   drift between its two consumers (the former literal 26 was
-   mirrored by comment alone — a promise, not a mechanism) */
 let cardW = 300;
 const CARD_GAP = 26;
 function measure(){ cardW = cards.length ? cards[0].el.offsetWidth : 300; }
 
 function layout(){
   const w = stage.clientWidth;
-  const slot = cardW + CARD_GAP; /* the one gap constant, defined above */
+  const slot = cardW + CARD_GAP;
   const n = cards.length;
-  /* capture focus before reflow — we may need to restore it */
   const focused = document.activeElement;
   let focusCard = null;
   cards.forEach((card, i) => {
@@ -1768,8 +894,6 @@ function layout(){
     else card.el.setAttribute('inert', '');
   });
 
-  /* if focus was in a card that just went inert, redirect to
-     the newly active card's input (or stage as fallback) */
   if (focusCard && focusCard.el.hasAttribute('inert')){
     const active = cards[index];
     if (active && active.amt){ active.amt.focus(); }
@@ -1778,7 +902,7 @@ function layout(){
 }
 
 function go(step){
-  closePop(); /* the pad belongs to the card in focus; don't let it ride along */
+  closePop();
   const n = cards.length;
   index = ((index + step) % n + n) % n;
   layout();
@@ -1787,28 +911,6 @@ function go(step){
 document.getElementById('prevBtn').addEventListener('click', () => { go(-1); });
 document.getElementById('nextBtn').addEventListener('click', () => { go(1); });
 
-/* v10.48, y-band v10.49 — click-to-select: any card is a target
-   now, by click, tap or touch. Off-centre cards carry inert, which
-   removes them from hit-testing entirely — a click on a dimmed
-   card lands on the stage beneath — so this listener lives on the
-   stage and resolves the card geometrically from the click's x,
-   the same slot arithmetic layout() performs. Three guards: a
-   click inside any card (the centred one's own controls) bows
-   out; so does a click on a nav arrow, whose own handler already
-   drove the step — without that guard the stage would step twice;
-   and since v10.49 the click's y must fall inside the target
-   card's own band — the stage is taller than the card row, so a
-   click far above or below a card shares its x-span without
-   touching it, and the slot resolution alone counted those as
-   strikes. The target card's live rect decides, read per click
-   and never cached, so the true on-screen band governs at every
-   viewport; the horizontal gap stays selectable inside the band
-   (x picks the card, y confirms the card was struck). Rounded
-   corners sit inside the rect — a corner-notch click selecting is
-   accepted as honest. Clicks outside a slot's horizontal span
-   remain scenery. cardW is layout()'s cached measure; CARD_GAP
-   above is the one gap constant — layout() and this handler read
-   the same name, so the slot arithmetic cannot drift */
 stage.addEventListener('click', e => {
   if (e.target.closest('.card') || e.target.closest('.nav')) return;
   const n = cards.length;
@@ -1821,13 +923,11 @@ stage.addEventListener('click', e => {
   const target = cards[((index + rel) % n + n) % n];
   const r = target.el.getBoundingClientRect();
   if (e.clientY < r.top || e.clientY > r.bottom) return;
-  closePop(); /* the pad belongs to the card in focus; it doesn't ride along */
+  closePop();
   index = ((index + rel) % n + n) % n;
   layout();
 });
 
-/* keyboard navigation on the focused stage; arrows pressed inside an
-   input are stopped upstream unless the caret is parked at an edge */
 stage.addEventListener('keydown', e => {
   if (e.defaultPrevented) return;
   if (e.key === 'ArrowLeft'){ e.preventDefault(); go(-1); }
@@ -1843,7 +943,7 @@ if (reducedMotion && reducedMotion.addEventListener) reducedMotion.addEventListe
 
 let resizeTimer = null;
 window.addEventListener('resize', () => {
-  stage.classList.remove('armed'); /* no decorative slide while resizing */
+  stage.classList.remove('armed');
   measure();
   layout();
   if (resizeTimer) clearTimeout(resizeTimer);
@@ -1852,13 +952,10 @@ window.addEventListener('resize', () => {
   }, 120);
 });
 
-/* ---------------- rates: fetch, fallback, bounds ---------------- */
 function fetchJSON(url, timeoutMs){
   return new Promise((resolve, reject) => {
     let settled = false;
     const ctl = ('AbortController' in window) ? new AbortController() : null;
-    /* single settle point: clears the timer and guarantees a one-shot
-       resolve/reject, replacing three copies of the same bookkeeping */
     const timer = setTimeout(() => {
       if (ctl) ctl.abort();
       finish(reject, new Error('timeout after ' + timeoutMs + 'ms'));
@@ -1869,11 +966,6 @@ function fetchJSON(url, timeoutMs){
       clearTimeout(timer);
       fn(arg);
     }
-    /* v10.38 — no-store keeps the "Live rates" label honest: the
-       HTTP cache could otherwise serve a stale response as fresh,
-       and it would mask the offline rehearsal's expected failure.
-       Same two allow-listed hosts, same keyless GETs; only
-       freshness is asserted */
     fetch(url, ctl ? {signal: ctl.signal, cache: 'no-store'} : {cache: 'no-store'})
       .then(r => {
         if (!r.ok) throw new Error('HTTP ' + r.status);
@@ -1885,8 +977,6 @@ function fetchJSON(url, timeoutMs){
 }
 
 function looksLikeErApi(j){ return j && j.result === 'success' && typeof j.base_code === 'string' && j.rates && typeof j.rates === 'object'; }
-/* v2 serves a flat array of {date, base, quote, rate} rows rather
-   than v1's {base, rates:{}} map */
 function looksLikeFrankV2(j){
   return Array.isArray(j) && j.length > 0 && j.every(r =>
     r && typeof r === 'object' &&
@@ -1894,16 +984,7 @@ function looksLikeFrankV2(j){
   );
 }
 
-/* v10.36 — generalized cross-rate: units of `to` per unit of `from`,
-   via the same quotient-of-per-base algebra the NZD-specific form
-   used (legacy cards pass (other, NZD), which reduces to exactly
-   the old computation). Null when either leg is unquotable or the
-   ratio falls outside the sanity bounds — never a substituted
-   figure */
 function computeCrossRate(rates, base, from, to){
-  /* a source never quotes its own base currency, so read the declared
-     base as 1; without this, EUR/NZD went dark whenever the EUR-based
-     Frankfurter fallback served the rates */
   const f = (from === base) ? 1 : rates[from];
   const t = (to === base) ? 1 : rates[to];
   if (typeof f !== 'number' || typeof t !== 'number'){
@@ -1920,11 +1001,6 @@ function computeCrossRate(rates, base, from, to){
 
 function applyRates(rates, base, label, when){
   state = {base, rates, label};
-  /* the menu rebuild runs first: it may snap the custom card's
-     selections to codes the source actually quotes, and the rate
-     computed below must reflect the snapped pair, not the pre-snap
-     one. Placement against real execution order, per the
-     cautionary trail */
   refreshCustomMenu(rates, base);
   cards.forEach(card => {
     card.rate = card.custom
@@ -1935,13 +1011,6 @@ function applyRates(rates, base, label, when){
   setStatus('Live rates via ' + label + ' \u00b7 ' + hhmm(when), 'live');
 }
 
-/* v10.36 — rebuild the custom card's two menus against what this
-   source actually quotes (the curated pool, intersected), preserving
-   current selections where they survive and snapping to sensible
-   defaults where they don't. Under the primary this is the full
-   curated set; under the fallback it narrows to the quoted codes —
-   a recorded known limit, honest rather than broken: an unquotable
-   currency simply isn't offered */
 function refreshCustomMenu(rates, base){
   const c = cards.find(k => k.custom);
   if (!c || !c.fromSel || !c.toSel) return;
@@ -1955,18 +1024,6 @@ function refreshCustomMenu(rates, base){
   render(c);
 }
 
-/* v10.36 — fill one currency select from a code list, showing
-   "CODE — Name" so the picker teaches while it offers */
-/* v10.40 — one disabled, valueless "here kitty kitty" option
-   separates the featured pairs from the alphabetical remainder:
-   drawn before the first code outside the featured set, and only
-   when both sides of it survive the menu cut — a separator pinned
-   to the top or tail of a cut menu is clutter, not structure (the
-   filter in refreshCustomMenu preserves the pool's featured-first
-   order, so the head is always a prefix). Disabled keeps it
-   unpickable and skipped by keyboard navigation, and the value
-   assignment below matches codes, so the selection can never land
-   on it (a disabled option is never matched) */
 function fillCcySelect(sel, menu, val){
   sel.innerHTML = '';
   const restStart = menu.findIndex(code => !FEATURED_CURRENCIES.includes(code));
@@ -1985,10 +1042,6 @@ function fillCcySelect(sel, menu, val){
   sel.value = val;
 }
 
-/* v10.36 — recompute the custom card's rate from the live state.
-   card.rate only refreshes in applyRates otherwise, so selection
-   changes and swaps would have displayed the previous pair's
-   figure */
 function recomputeCustom(card){
   card.rate = state ? computeCrossRate(state.rates, state.base, card.fromCcy, card.toCcy) : null;
 }
@@ -1997,23 +1050,19 @@ function failAll(reason){
   state = null;
   cards.forEach(card => {
     card.rate = null;
-    updateOutput(card); /* outputs clear; inputs stay editable */
+    updateOutput(card);
   });
   setStatus('Rates unavailable \u2014 tap Update Rates to retry', 'bad');
   console.warn('[FX Convert] Both rate sources failed. ' + reason);
 }
 
 function refreshRates(){
-  if (busy) return; /* no parallel-fetch races */
+  if (busy) return;
   busy = true;
   updBtn.disabled = true;
   updBtn.textContent = 'Updating\u2026';
   setStatus('Fetching live rates\u2026', 'busy');
 
-  /* v10.36 — the fallback URL carries the custom card's current
-     selections alongside the legacy pairs, so exotic legs stay
-     quotable when Frankfurter serves. Built once per attempt from
-     the selections as they stand when the refresh begins */
   const custom = cards.find(c => c.custom);
   const dynFallbackUrl = getFallbackUrl(
     custom && custom.fromSel ? custom.fromSel.value : null,
@@ -2028,10 +1077,6 @@ function refreshRates(){
       console.warn('[FX Convert] Primary source (open.er-api.com) failed: ' + err.message);
       return fetchJSON(dynFallbackUrl, FALLBACK_MS).then(j2 => {
         if (!looksLikeFrankV2(j2)) throw new Error('fallback response malformed');
-        /* every row must declare the same base, and it must be the base
-           we asked for: a deviation breaks the request's contract (EUR
-           is excluded from the quotes for being the base), so refuse
-           loudly rather than trust a reshaped response */
         const rowsBase = j2[0].base;
         if (rowsBase !== FALLBACK_BASE || j2.some(r => r.base !== rowsBase)){
           throw new Error('fallback base mismatch: expected ' + FALLBACK_BASE + ', rows declare ' + rowsBase);
@@ -2057,10 +1102,6 @@ function refreshRates(){
 
 updBtn.addEventListener('click', refreshRates);
 
-/* ---------------- boot ---------------- */
-/* v10.37 — custom card leads the carousel, so it greets the user
-   on load. The fixed USD→NZD pair is now its default, making that
-   hardcoded card redundant. Four legacy pairs follow */
 const customCard = buildCard(null, {custom: true, fromCcy: 'USD', toCcy: NZD});
 cards.push(customCard);
 render(customCard);
@@ -2076,7 +1117,6 @@ PAIRS.forEach(p => {
 applyRM();
 measure();
 layout();
-/* arm transitions only after first paint, so opening the page never animates */
 requestAnimationFrame(() => requestAnimationFrame(() => stage.classList.add('armed')));
 
 refreshRates();
