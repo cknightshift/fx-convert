@@ -553,13 +553,47 @@ footer{
        to stand alone -->
   <p class="priv"><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer" style="color:var(--rose-light);text-decoration:none">Rates By Exchange Rate API</a></p>
   <p class="maint">Estimates only — use at your own risk</p>
-  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.48</span></p>
+  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.49</span></p>
   <p class="priv"><a href="https://github.com/cknightshift/fx-convert/blob/main/README.md" target="_blank" rel="noopener noreferrer">Catnip, Disclaimer &amp; Privacy Policy</a></p>
 </footer>
 
 <script>
 (function(){
 'use strict';
+
+/* ===== v10.49 — click-to-select gains its vertical band ==========
+   - An outside observation on the shipped v10.48: a selection was
+     registered for clicks well above or below a card, anywhere in
+     its x-span. Expected given the mechanism, not intended: the
+     slot resolver reads only the click's x (it must — inert
+     off-centre cards pass every click through to the stage), and
+     the stage is far taller than the card row, so vertical
+     overshoot shared a slot's horizontal span without touching
+     the card. The v10.48 banner's "gap it sits in" claim covered
+     the horizontal gap only; the vertical overshoot was an
+     oversight of the geometry, now closed.
+   - Fix at the same decision point, mirroring the horizontal
+     test's spirit: x decides which card, y decides whether the
+     card was actually struck. After slot resolution, the target
+     card's live bounding rect (getBoundingClientRect, read per
+     click, never cached) must contain the click's y. One guard,
+     no timers, no per-card wiring; the rect cannot drift because
+     it is read from the browser at strike time. The horizontal
+     gap stays selectable within the band; rounded corners sit
+     inside the rect, so a corner-notch click selecting is
+     accepted as honest. Keyboard navigation, arrows, focus
+     retention and inert untouched.
+   - Outside-audit tidy folded into this unpublished batch (no
+     extra bump): the card gap hoisted into a CARD_GAP constant
+     beside cardW, consumed by layout() and the stage listener
+     alike — the mirror-by-comment coupling retires; the v10.45
+     banner's opening delimiter repaired to a matched ==== run
+     (cosmetic, text untouched). A reported column-0 indentation
+     drift on two buildCard() listener lines was adjudicated
+     CONDITIONAL and refuted by the file — the lines sit at the
+     function's true indent; no fix shipped.
+   - Stamp to v10.49.
+   ================================================================ */
 
 /* ===== v10.48 — click-to-select, slide tightened, tag retired =====
    - Card selection gains a second path: any card in the carousel
@@ -615,7 +649,7 @@ footer{
      bannered per the v10.38 color-scheme precedent.
    ================================================================ */
 
-/* ===== v10.45 — visual round: bookmark beacon, custom-card dressing =
+/* ===== v10.45 — visual round: bookmark beacon, custom-card dressing ====
    - The stage's bobbing chevron is recut as a bookmark-style arrow:
      same bob (2.6s), same tip spark on the heart's .spk clock, same
      matte facet palette and hard-cut outline, new pennant silhouette
@@ -1705,13 +1739,17 @@ document.addEventListener('keydown', e => {
 /* card width changes only with the viewport (min(340px,84vw)), so it is
    measured once at boot and again on resize; layout() used to force a
    reflow reading offsetWidth on every carousel step */
+/* v10.49 — the card gap lives here once: layout() and the stage
+   click handler both read CARD_GAP, so the slot arithmetic cannot
+   drift between its two consumers (the former literal 26 was
+   mirrored by comment alone — a promise, not a mechanism) */
 let cardW = 300;
+const CARD_GAP = 26;
 function measure(){ cardW = cards.length ? cards[0].el.offsetWidth : 300; }
 
 function layout(){
   const w = stage.clientWidth;
-  const GAP = 26;
-  const slot = cardW + GAP;
+  const slot = cardW + CARD_GAP; /* the one gap constant, defined above */
   const n = cards.length;
   /* capture focus before reflow — we may need to restore it */
   const focused = document.activeElement;
@@ -1749,28 +1787,40 @@ function go(step){
 document.getElementById('prevBtn').addEventListener('click', () => { go(-1); });
 document.getElementById('nextBtn').addEventListener('click', () => { go(1); });
 
-/* v10.48 — click-to-select: any card is a target now, by click,
-   tap or touch. Off-centre cards carry inert, which removes them
-   from hit-testing entirely — a click on a dimmed card lands on
-   the stage beneath — so this listener lives on the stage and
-   resolves the card geometrically from the click's x, the same
-   slot arithmetic layout() performs. Two guards: a click inside
-   any card (the centred one's own controls) bows out, and so does
-   a click on a nav arrow, whose own handler already drove the
-   step — without the guard the stage would step twice. Clicks
-   outside a slot's horizontal span are scenery, not selection.
-   cardW is layout()'s cached measure; the 26px gap is layout()'s
-   GAP mirrored — kept in step by comment, the two live a screen
-   apart */
+/* v10.48, y-band v10.49 — click-to-select: any card is a target
+   now, by click, tap or touch. Off-centre cards carry inert, which
+   removes them from hit-testing entirely — a click on a dimmed
+   card lands on the stage beneath — so this listener lives on the
+   stage and resolves the card geometrically from the click's x,
+   the same slot arithmetic layout() performs. Three guards: a
+   click inside any card (the centred one's own controls) bows
+   out; so does a click on a nav arrow, whose own handler already
+   drove the step — without that guard the stage would step twice;
+   and since v10.49 the click's y must fall inside the target
+   card's own band — the stage is taller than the card row, so a
+   click far above or below a card shares its x-span without
+   touching it, and the slot resolution alone counted those as
+   strikes. The target card's live rect decides, read per click
+   and never cached, so the true on-screen band governs at every
+   viewport; the horizontal gap stays selectable inside the band
+   (x picks the card, y confirms the card was struck). Rounded
+   corners sit inside the rect — a corner-notch click selecting is
+   accepted as honest. Clicks outside a slot's horizontal span
+   remain scenery. cardW is layout()'s cached measure; CARD_GAP
+   above is the one gap constant — layout() and this handler read
+   the same name, so the slot arithmetic cannot drift */
 stage.addEventListener('click', e => {
   if (e.target.closest('.card') || e.target.closest('.nav')) return;
   const n = cards.length;
   if (!n) return;
   const w = stage.clientWidth;
-  const slot = cardW + 26;
+  const slot = cardW + CARD_GAP;
   const x = e.clientX - stage.getBoundingClientRect().left;
   const rel = Math.round((x - w / 2) / slot);
   if (rel === 0 || Math.abs(x - (w / 2 + rel * slot)) > cardW / 2) return;
+  const target = cards[((index + rel) % n + n) % n];
+  const r = target.el.getBoundingClientRect();
+  if (e.clientY < r.top || e.clientY > r.bottom) return;
   closePop(); /* the pad belongs to the card in focus; it doesn't ride along */
   index = ((index + rel) % n + n) % n;
   layout();
