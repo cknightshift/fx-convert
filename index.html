@@ -41,7 +41,7 @@
 }
 *{margin:0;padding:0;box-sizing:border-box}
 ::selection{background:#3ee6c8;color:#081410}
-.btn,.nav,.swap,.calc-btn,.calc-pop button,.ccy,.brand-link{touch-action:manipulation}
+.btn,.nav,.swap,.calc-btn,.calc-pop button,.ccy,.ccy-opt,.brand-link{touch-action:manipulation}
 html,body{min-height:100%}
 body{
   font-family:"Avenir Next","Segoe UI",system-ui,-apple-system,"Helvetica Neue",Arial,sans-serif;
@@ -137,7 +137,7 @@ header .logo{flex:0 0 auto;display:block}
 .stage.armed .card{transition:transform .34s cubic-bezier(.25,.8,.25,1),opacity .34s ease}
 .stage.rm .card{transition:none !important}
 .stage:focus-visible{outline:1px solid var(--teal);outline-offset:-1px;border-radius:4px}
-.pair{display:flex;align-items:baseline;gap:10px;justify-content:center;flex-wrap:wrap}
+.pair{position:relative;display:flex;align-items:baseline;gap:10px;justify-content:center;flex-wrap:wrap}
 .pair .code{
   font-size:24px;font-weight:700;letter-spacing:.06em;color:var(--teal);
 }
@@ -166,14 +166,13 @@ header .logo{flex:0 0 auto;display:block}
 .amt::placeholder{color:#3a5c53}
 .pair .ccy{
   font-family:inherit;font-size:24px;font-weight:700;letter-spacing:.06em;
-  color:var(--teal);background:none;border:none;
+  color:var(--teal);background:none;border:none;padding:0 22px 0 0;
   cursor:pointer;max-width:100%;
 }
 .pair.to .ccy{color:var(--plum)}
 .ccy:focus{outline:1px solid var(--teal);outline-offset:2px}
 .pair .ccy{
   appearance:none;
-  padding-right:22px;
   background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path d='M1.5 1.5L6 6.5L10.5 1.5' fill='none' stroke='%233ee6c8' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/></svg>");
   background-repeat:no-repeat;
   background-position:right 2px center;
@@ -181,6 +180,25 @@ header .logo{flex:0 0 auto;display:block}
 }
 .pair.to .ccy{
   background-image:url("data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'><path d='M1.5 1.5L6 6.5L10.5 1.5' fill='none' stroke='%23b04e90' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+}
+.ccy-menu{
+  position:absolute;top:calc(100% + 6px);left:50%;transform:translateX(-50%);
+  z-index:45;min-width:200px;max-width:78vw;max-height:264px;overflow-y:auto;
+  background:#0e2620;border:1px solid var(--card-edge);border-radius:12px;
+  padding:6px;box-shadow:0 16px 40px rgba(0,0,0,.55);
+}
+.ccy-menu.up{top:auto;bottom:calc(100% + 6px)}
+.ccy-menu[hidden]{display:none}
+.ccy-opt{
+  padding:8px 12px;border-radius:8px;font-size:15px;letter-spacing:.02em;
+  color:var(--ink);cursor:pointer;white-space:nowrap;
+}
+.ccy-opt:hover{background:rgba(62,230,200,.14)}
+.ccy-opt.on{background:rgba(62,230,200,.2);color:var(--teal);font-weight:600}
+.ccy-opt.active{outline:1px solid var(--teal);outline-offset:-1px;background:rgba(62,230,200,.1)}
+.ccy-sep{
+  margin-top:3px;padding:7px 12px 3px;border-top:1px solid var(--card-edge);
+  font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--dim);
 }
 .calc-btn{
   appearance:none;flex:0 0 auto;width:46px;
@@ -395,7 +413,7 @@ footer{
   </svg>
   <p class="priv"><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer" style="color:var(--rose-light);text-decoration:none">Rates By Exchange Rate API</a></p>
   <p class="maint">Estimates only — use at your own risk</p>
-  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.50</span></p>
+  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.51</span></p>
   <p class="priv"><a href="https://github.com/cknightshift/fx-convert/blob/main/README.md" target="_blank" rel="noopener noreferrer">Catnip, Disclaimer &amp; Privacy Policy</a></p>
 </footer>
 <script>
@@ -599,9 +617,9 @@ function buildCard(pair, opts){
 
   if (isCustom){
     el.innerHTML =
-      '<div class="pair from"><select class="ccy from-ccy" aria-label="From currency"></select></div>' +
+      '<div class="pair from"></div>' +
       '<button class="swap" type="button" aria-label="Reverse direction">\u21c4</button>' +
-      '<div class="pair to"><select class="ccy to-ccy" aria-label="To currency"></select></div>' +
+      '<div class="pair to"></div>' +
       '<div class="io">' +
         '<div class="lbl lbl-in">Amount in <span class="x-display"></span></div>' +
         '<div class="inrow">' +
@@ -630,8 +648,7 @@ function buildCard(pair, opts){
     rate: null,
     timer: null,
     fromCcy, toCcy,
-    fromSel:  isCustom ? el.querySelector('.from-ccy') : null,
-    toSel:    isCustom ? el.querySelector('.to-ccy') : null,
+    commitCcy: null,
     xDisplay: isCustom ? el.querySelector('.x-display') : null,
     yDisplay: isCustom ? el.querySelector('.y-display') : null,
     fromCode: isCustom ? null : el.querySelector('.pair.from .code'),
@@ -648,12 +665,19 @@ function buildCard(pair, opts){
   };
 
   if (isCustom){
-    fillCcySelect(card.fromSel, CUSTOM_CURRENCIES, fromCcy);
-    fillCcySelect(card.toSel, CUSTOM_CURRENCIES, toCcy);
+    card.fromCtl = buildCcyControl(card, 'from');
+    card.toCtl = buildCcyControl(card, 'to');
+    el.querySelector('.pair.from').appendChild(card.fromCtl.btn);
+    el.querySelector('.pair.from').appendChild(card.fromCtl.menu);
+    el.querySelector('.pair.to').appendChild(card.toCtl.btn);
+    el.querySelector('.pair.to').appendChild(card.toCtl.menu);
+    fillCcyControl(card.fromCtl, CUSTOM_CURRENCIES, fromCcy);
+    fillCcyControl(card.toCtl, CUSTOM_CURRENCIES, toCcy);
   }
 
   el.querySelector('.swap').addEventListener('click', () => {
     closePop();
+    closeAllMenus();
     if (card.timer){ clearTimeout(card.timer); card.timer = null; }
     if (card.custom){
       const tmp = card.fromCcy;
@@ -668,25 +692,13 @@ function buildCard(pair, opts){
   });
 
   if (isCustom){
-    card.fromSel.addEventListener('change', () => {
+    card.commitCcy = function(which, code){
       if (card.timer){ clearTimeout(card.timer); card.timer = null; }
-      card.fromCcy = card.fromSel.value;
+      if (which === 'from') card.fromCcy = code; else card.toCcy = code;
       recomputeCustom(card);
       render(card);
       updateOutput(card);
-    });
-    card.toSel.addEventListener('change', () => {
-      if (card.timer){ clearTimeout(card.timer); card.timer = null; }
-      card.toCcy = card.toSel.value;
-      recomputeCustom(card);
-      render(card);
-      updateOutput(card);
-    });
-    const stopStageArrows = e => {
-      if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') e.stopPropagation();
     };
-    card.fromSel.addEventListener('keydown', stopStageArrows);
-    card.toSel.addEventListener('keydown', stopStageArrows);
   }
 
   card.amt.addEventListener('input', () => { onAmountInput(card); });
@@ -713,8 +725,8 @@ function render(card){
   if (card.custom){
     card.xDisplay.textContent = card.fromCcy;
     card.yDisplay.textContent = card.toCcy;
-    card.fromSel.value = card.fromCcy;
-    card.toSel.value = card.toCcy;
+    card.fromCtl.display(card.fromCcy);
+    card.toCtl.display(card.toCcy);
     card.amt.setAttribute('aria-label', 'Amount in ' + card.fromCcy);
     card.el.setAttribute('aria-label', card.fromCcy + ' to ' + card.toCcy);
     return;
@@ -865,9 +877,11 @@ document.addEventListener('mousedown', e => {
   if (!pop.hidden && openCard){
     if (!pop.contains(e.target) && !openCard.calcBtn.contains(e.target) && !openCard.amt.contains(e.target)) closePop();
   }
+  if (openMenuCtl && !openMenuCtl.btn.contains(e.target) && !openMenuCtl.menu.contains(e.target)) openMenuCtl.close(false);
 });
 document.addEventListener('keydown', e => {
   if (!pop.hidden && e.key === 'Escape'){ closePop(); }
+  if (openMenuCtl && e.key === 'Escape') openMenuCtl.close(false);
 });
 
 let cardW = 300;
@@ -903,9 +917,12 @@ function layout(){
 
 function go(step){
   closePop();
+  closeAllMenus();
   const n = cards.length;
   index = ((index + step) % n + n) % n;
   layout();
+  const active = cards[index];
+  if (!COARSE && active && active.amt) active.amt.focus({preventScroll:true});
 }
 
 document.getElementById('prevBtn').addEventListener('click', () => { go(-1); });
@@ -924,8 +941,11 @@ stage.addEventListener('click', e => {
   const r = target.el.getBoundingClientRect();
   if (e.clientY < r.top || e.clientY > r.bottom) return;
   closePop();
+  closeAllMenus();
   index = ((index + rel) % n + n) % n;
   layout();
+  const picked = cards[index];
+  if (!COARSE && picked && picked.amt) picked.amt.focus({preventScroll:true});
 });
 
 stage.addEventListener('keydown', e => {
@@ -1011,35 +1031,194 @@ function applyRates(rates, base, label, when){
   setStatus('Live rates via ' + label + ' \u00b7 ' + hhmm(when), 'live');
 }
 
+let openMenuCtl = null;
+function closeAllMenus(){
+  if (openMenuCtl) openMenuCtl.close(false);
+}
+
+let ccyUid = 0;
+function buildCcyControl(card, which){
+  const btn = document.createElement('button');
+  btn.type = 'button';
+  btn.className = 'ccy';
+  btn.setAttribute('aria-haspopup', 'listbox');
+  btn.setAttribute('aria-expanded', 'false');
+  const menuId = 'ccy-menu-' + which + '-' + (++ccyUid);
+  const menu = document.createElement('div');
+  menu.className = 'ccy-menu';
+  menu.id = menuId;
+  menu.hidden = true;
+  menu.setAttribute('role', 'listbox');
+  btn.setAttribute('aria-controls', menuId);
+
+  const ctl = {btn, menu, opts: [], open: false, active: -1};
+
+  function current(){
+    return which === 'from' ? card.fromCcy : card.toCcy;
+  }
+
+  ctl.display = function(code){
+    btn.textContent = code;
+    btn.setAttribute('aria-label',
+      code + ' \u2014 ' + (CURRENCY_NAMES[code] || code) +
+      (which === 'from' ? ', from currency' : ', to currency'));
+  };
+
+  function optNodes(){
+    return menu.querySelectorAll('.ccy-opt');
+  }
+
+  function markSelected(){
+    Array.prototype.forEach.call(optNodes(), node => {
+      const on = node.dataset.code === current();
+      node.classList.toggle('on', on);
+      if (on) node.setAttribute('aria-selected', 'true');
+      else node.removeAttribute('aria-selected');
+    });
+  }
+
+  function setActive(i){
+    const nodes = optNodes();
+    if (!nodes.length) return;
+    ctl.active = ((i % nodes.length) + nodes.length) % nodes.length;
+    Array.prototype.forEach.call(nodes, (node, j) => {
+      node.classList.toggle('active', j === ctl.active);
+    });
+    btn.setAttribute('aria-activedescendant', nodes[ctl.active].id);
+    nodes[ctl.active].scrollIntoView({block: 'nearest'});
+  }
+
+  function buildList(){
+    menu.innerHTML = '';
+    ctl.opts.forEach(item => {
+      if (item.sep){
+        const sep = document.createElement('div');
+        sep.className = 'ccy-sep';
+        sep.setAttribute('role', 'presentation');
+        sep.textContent = 'here kitty kitty';
+        menu.appendChild(sep);
+        return;
+      }
+      const opt = document.createElement('div');
+      opt.className = 'ccy-opt';
+      opt.id = menuId + '-' + item.code;
+      opt.dataset.code = item.code;
+      opt.setAttribute('role', 'option');
+      opt.textContent = item.code + ' \u2014 ' + (CURRENCY_NAMES[item.code] || item.code);
+      menu.appendChild(opt);
+    });
+  }
+
+  function place(){
+    menu.classList.remove('up');
+    const b = btn.getBoundingClientRect();
+    const h = menu.offsetHeight;
+    if (h > window.innerHeight - b.bottom && b.top > h) menu.classList.add('up');
+  }
+
+  function openMenu(){
+    closePop();
+    closeAllMenus();
+    buildList();
+    markSelected();
+    ctl.open = true;
+    openMenuCtl = ctl;
+    menu.hidden = false;
+    place();
+    let start = 0;
+    Array.prototype.forEach.call(optNodes(), (node, j) => {
+      if (node.dataset.code === current()) start = j;
+    });
+    setActive(start);
+    btn.setAttribute('aria-expanded', 'true');
+  }
+
+  ctl.close = function(refocus){
+    if (!ctl.open) return;
+    ctl.open = false;
+    if (openMenuCtl === ctl) openMenuCtl = null;
+    menu.hidden = true;
+    btn.setAttribute('aria-expanded', 'false');
+    btn.removeAttribute('aria-activedescendant');
+    if (refocus) btn.focus();
+  };
+
+  function commit(code, refocus){
+    if (ctl.open) ctl.close(refocus);
+    card.commitCcy(which, code);
+  }
+
+  btn.addEventListener('click', () => {
+    if (ctl.open) ctl.close(true); else openMenu();
+  });
+
+  btn.addEventListener('keydown', e => {
+    if (ctl.open){
+      if (e.key === 'ArrowDown'){ e.preventDefault(); e.stopPropagation(); setActive(ctl.active + 1); }
+      else if (e.key === 'ArrowUp'){ e.preventDefault(); e.stopPropagation(); setActive(ctl.active - 1); }
+      else if (e.key === 'Home'){ e.preventDefault(); e.stopPropagation(); setActive(0); }
+      else if (e.key === 'End'){ e.preventDefault(); e.stopPropagation(); setActive(optNodes().length - 1); }
+      else if (e.key === 'Enter' || e.key === ' '){
+        e.preventDefault(); e.stopPropagation();
+        const nodes = optNodes();
+        if (ctl.active >= 0 && nodes[ctl.active]) commit(nodes[ctl.active].dataset.code, true);
+      }
+      else if (e.key === 'Escape'){ e.preventDefault(); e.stopPropagation(); ctl.close(true); }
+      else if (e.key === 'Tab'){ ctl.close(false); }
+      else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight'){ e.stopPropagation(); }
+    } else if (e.key === 'ArrowDown' || e.key === 'ArrowUp'){
+      e.preventDefault(); e.stopPropagation(); openMenu();
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight'){
+      e.stopPropagation();
+    }
+  });
+
+  menu.addEventListener('mouseover', e => {
+    if (!ctl.open) return;
+    const node = e.target.closest('.ccy-opt');
+    if (!node) return;
+    const nodes = Array.prototype.slice.call(optNodes());
+    const j = nodes.indexOf(node);
+    if (j >= 0 && j !== ctl.active) setActive(j);
+  });
+
+  menu.addEventListener('mousedown', e => {
+    e.preventDefault();
+    if (e.target.closest('.ccy-sep')) return;
+    const node = e.target.closest('.ccy-opt');
+    if (!node) return;
+    commit(node.dataset.code, false);
+    btn.focus();
+  });
+
+  menu.addEventListener('click', e => {
+    e.preventDefault();
+  });
+
+  return ctl;
+}
+
+function fillCcyControl(ctl, menu, val){
+  const restStart = menu.findIndex(code => !FEATURED_CURRENCIES.includes(code));
+  ctl.opts = [];
+  menu.forEach((code, i) => {
+    if (i === restStart && restStart > 0) ctl.opts.push({sep:true});
+    ctl.opts.push({code: code});
+  });
+  ctl.display(val);
+}
+
 function refreshCustomMenu(rates, base){
   const c = cards.find(k => k.custom);
-  if (!c || !c.fromSel || !c.toSel) return;
+  if (!c || !c.fromCtl || !c.toCtl) return;
   const menu = CUSTOM_CURRENCIES.filter(code =>
     code === base || typeof rates[code] === 'number');
   if (!menu.length) return;
   if (!menu.includes(c.fromCcy)) c.fromCcy = menu[0];
   if (!menu.includes(c.toCcy)) c.toCcy = menu.includes(NZD) ? NZD : menu[0];
-  fillCcySelect(c.fromSel, menu, c.fromCcy);
-  fillCcySelect(c.toSel, menu, c.toCcy);
+  fillCcyControl(c.fromCtl, menu, c.fromCcy);
+  fillCcyControl(c.toCtl, menu, c.toCcy);
   render(c);
-}
-
-function fillCcySelect(sel, menu, val){
-  sel.innerHTML = '';
-  const restStart = menu.findIndex(code => !FEATURED_CURRENCIES.includes(code));
-  menu.forEach((code, i) => {
-    if (i === restStart && restStart > 0){
-      const sep = document.createElement('option');
-      sep.disabled = true;
-      sep.textContent = 'here kitty kitty';
-      sel.appendChild(sep);
-    }
-    const opt = document.createElement('option');
-    opt.value = code;
-    opt.textContent = code + ' \u2014 ' + (CURRENCY_NAMES[code] || code);
-    sel.appendChild(opt);
-  });
-  sel.value = val;
 }
 
 function recomputeCustom(card){
@@ -1063,11 +1242,6 @@ function refreshRates(){
   updBtn.textContent = 'Updating\u2026';
   setStatus('Fetching live rates\u2026', 'busy');
 
-  const custom = cards.find(c => c.custom);
-  const dynFallbackUrl = getFallbackUrl(
-    custom && custom.fromSel ? custom.fromSel.value : null,
-    custom && custom.toSel ? custom.toSel.value : null);
-
   fetchJSON(PRIMARY_URL, PRIMARY_MS)
     .then(j => {
       if (!looksLikeErApi(j)) throw new Error('primary response malformed');
@@ -1075,6 +1249,10 @@ function refreshRates(){
     })
     .catch(err => {
       console.warn('[FX Convert] Primary source (open.er-api.com) failed: ' + err.message);
+      const customNow = cards.find(c => c.custom);
+      const dynFallbackUrl = getFallbackUrl(
+        customNow ? customNow.fromCcy : null,
+        customNow ? customNow.toCcy : null);
       return fetchJSON(dynFallbackUrl, FALLBACK_MS).then(j2 => {
         if (!looksLikeFrankV2(j2)) throw new Error('fallback response malformed');
         const rowsBase = j2[0].base;
