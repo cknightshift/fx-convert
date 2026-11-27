@@ -413,7 +413,7 @@ footer{
   </svg>
   <p class="priv"><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer" style="color:var(--rose-light);text-decoration:none">Rates By Exchange Rate API</a></p>
   <p class="maint">Estimates only — use at your own risk</p>
-  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.52</span></p>
+  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.53</span></p>
   <p class="priv"><a href="https://github.com/cknightshift/fx-convert/blob/main/README.md" target="_blank" rel="noopener noreferrer">Catnip, Disclaimer &amp; Privacy Policy</a></p>
 </footer>
 <script>
@@ -441,6 +441,8 @@ function getFallbackUrl(fromCcy, toCcy){
     '&quotes=' + Array.from(wanted).join(',');
 }
 const PRIMARY_MS = 12000, FALLBACK_MS = 8000;
+const CACHE_KEY = 'fx-convert-rates';
+const STALE_MAX_MS = 48 * 60 * 60 * 1000;
 const NUM = /[0-9.]/;
 const FEATURED_CURRENCIES = ['USD', NZD].concat(PAIRS.map(p => p[0]));
 const CUSTOM_CURRENCIES = FEATURED_CURRENCIES.concat([
@@ -467,6 +469,27 @@ let state = null;
 let busy = false;
 let index = 0;
 const cards = [];
+
+function saveCache(rates, base, label, fetched, freshUntil, eol){
+  try {
+    window.localStorage.setItem(CACHE_KEY, JSON.stringify({
+      rates: rates, base: base, label: label,
+      fetched: fetched, freshUntil: freshUntil, eol: eol
+    }));
+  } catch(e){}
+}
+
+function loadCache(){
+  try {
+    const o = JSON.parse(window.localStorage.getItem(CACHE_KEY) || 'null');
+    if (!o || typeof o.base !== 'string' || typeof o.label !== 'string') return null;
+    if (!o.rates || typeof o.rates !== 'object') return null;
+    if (typeof o.fetched !== 'number' || typeof o.freshUntil !== 'number') return null;
+    if (Date.now() > o.freshUntil + STALE_MAX_MS) return null;
+    if (typeof o.eol === 'number' && o.eol > 0 && Date.now() / 1000 > o.eol) return null;
+    return o;
+  } catch(e){ return null; }
+}
 
 function setStatus(text, dotClass){
   statusText.textContent = text;
@@ -987,10 +1010,17 @@ function fetchJSON(url, timeoutMs){
       fn(arg);
     }
     fetch(url, ctl ? {signal: ctl.signal, cache: 'no-store'} : {cache: 'no-store'})
-      .then(r => {
-        if (!r.ok) throw new Error('HTTP ' + r.status);
-        return r.json();
-      })
+      .then(r => r.text().then(t => {
+        if (!r.ok){
+          let detail = '';
+          try {
+            const eb = JSON.parse(t);
+            if (eb && typeof eb['error-type'] === 'string') detail = ' (' + eb['error-type'] + ')';
+          } catch(e){}
+          throw new Error('HTTP ' + r.status + detail);
+        }
+        return JSON.parse(t);
+      }))
       .then(j => finish(resolve, j))
       .catch(err => finish(reject, err));
   });
@@ -1226,17 +1256,31 @@ function recomputeCustom(card){
 }
 
 function failAll(reason){
-  state = null;
-  cards.forEach(card => {
-    card.rate = null;
-    updateOutput(card);
-  });
-  setStatus('Rates unavailable \u2014 tap Update Rates to retry', 'bad');
+  const cached = loadCache();
+  if (cached){
+    applyRates(cached.rates, cached.base, cached.label, new Date(cached.fetched));
+    setStatus('Rates unavailable \u2014 cached rates from ' + hhmm(new Date(cached.fetched)) + ' \u00b7 tap Update Rates to retry', 'bad');
+  } else {
+    state = null;
+    cards.forEach(card => {
+      card.rate = null;
+      updateOutput(card);
+    });
+    setStatus('Rates unavailable \u2014 tap Update Rates to retry', 'bad');
+  }
   console.warn('[FX Convert] Both rate sources failed. ' + reason);
 }
 
-function refreshRates(){
+function refreshRates(force){
   if (busy) return;
+  const cached = loadCache();
+  if (cached){
+    applyRates(cached.rates, cached.base, cached.label, new Date(cached.fetched));
+    if (!force && Date.now() < cached.freshUntil){
+      setStatus('Cached rates \u00b7 fetched ' + hhmm(new Date(cached.fetched)), 'live');
+      return;
+    }
+  }
   busy = true;
   updBtn.disabled = true;
   updBtn.textContent = 'Updating\u2026';
@@ -1245,6 +1289,14 @@ function refreshRates(){
   fetchJSON(PRIMARY_URL, PRIMARY_MS)
     .then(j => {
       if (!looksLikeErApi(j)) throw new Error('primary response malformed');
+      if (typeof j.time_eol_unix === 'number' && j.time_eol_unix > 0 && Date.now() / 1000 > j.time_eol_unix){
+        throw new Error('primary past declared EOL (' + j.time_eol_unix + ')');
+      }
+      const freshUntil = (typeof j.time_next_update_unix === 'number' && j.time_next_update_unix > Date.now() / 1000)
+        ? j.time_next_update_unix * 1000
+        : Date.now() + 24 * 60 * 60 * 1000;
+      saveCache(j.rates, j.base_code, 'open.er-api.com', Date.now(), freshUntil,
+        (typeof j.time_eol_unix === 'number') ? j.time_eol_unix : 0);
       return {rates: j.rates, base: j.base_code, label: 'open.er-api.com'};
     })
     .catch(err => {
@@ -1266,6 +1318,7 @@ function refreshRates(){
           else skipped++;
         });
         if (skipped > 0) console.warn('[FX Convert] Frankfurter v2 skipped ' + skipped + ' malformed rate row(s).');
+        saveCache(rates, rowsBase, 'frankfurter.dev', Date.now(), Date.now() + 24 * 60 * 60 * 1000, 0);
         return {rates: rates, base: rowsBase, label: 'frankfurter.dev'};
       });
     })
@@ -1278,7 +1331,7 @@ function refreshRates(){
     });
 }
 
-updBtn.addEventListener('click', refreshRates);
+updBtn.addEventListener('click', () => refreshRates(true));
 
 const customCard = buildCard(null, {custom: true, fromCcy: 'USD', toCcy: NZD});
 cards.push(customCard);
