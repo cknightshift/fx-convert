@@ -37,6 +37,7 @@
   --card:#0c201a;
   --card-edge:#1c3a32;
   --live:#43d98a;
+  --warn:#f8c64b;
   --bad:#ff5f66;
 }
 *{margin:0;padding:0;box-sizing:border-box}
@@ -104,6 +105,7 @@ header .logo{flex:0 0 auto;display:block}
   display:inline-flex;align-items:center;gap:8px;
   font-size:13.5px;color:var(--mut);min-height:1.2em;
 }
+.status.warn{color:var(--warn)}
 .status.err{color:var(--bad)}
 .stage{
   position:relative;flex:1 0 auto;
@@ -268,6 +270,7 @@ footer{
   background:#57756c;vertical-align:middle;flex:0 0 auto;
 }
 .dot.live{background:var(--live);box-shadow:0 0 6px rgba(67,217,138,.7)}
+.dot.warn{background:var(--warn);box-shadow:0 0 6px rgba(248,198,75,.7)}
 .dot.bad{background:var(--bad);box-shadow:0 0 6px rgba(255,95,102,.7)}
 .dot.busy{background:#57756c}
 .ver{font-size:12px;color:var(--rose-light);letter-spacing:.12em;margin-left:7px}
@@ -413,7 +416,7 @@ footer{
   </svg>
   <p class="priv"><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer" style="color:var(--rose-light);text-decoration:none">Rates By Exchange Rate API</a></p>
   <p class="maint">Estimates only — use at your own risk</p>
-  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.55</span></p>
+  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.56</span></p>
   <p class="priv"><a href="https://github.com/cknightshift/fx-convert/blob/main/README.md" target="_blank" rel="noopener noreferrer">Catnip, Disclaimer &amp; Privacy Policy</a></p>
 </footer>
 <script>
@@ -492,6 +495,7 @@ function loadCache(){
 
 function setStatus(text, dotClass){
   statusText.textContent = text;
+  statusWrap.classList.toggle('warn', dotClass === 'warn');
   statusWrap.classList.toggle('err', dotClass === 'bad');
   statusDot.className = 'dot ' + dotClass;
 }
@@ -1254,7 +1258,7 @@ function failAll(reason){
   const cached = loadCache();
   if (cached){
     applyRates(cached.rates, cached.base);
-    setStatus('Live rates are goneburger \u2014 cached rates are active', 'bad');
+    setStatus('Live rates are goneburger \u2014 cached rates are active', 'warn');
   } else {
     state = null;
     cards.forEach(card => {
