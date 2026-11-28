@@ -413,7 +413,7 @@ footer{
   </svg>
   <p class="priv"><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer" style="color:var(--rose-light);text-decoration:none">Rates By Exchange Rate API</a></p>
   <p class="maint">Estimates only — use at your own risk</p>
-  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.53</span></p>
+  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.54</span></p>
   <p class="priv"><a href="https://github.com/cknightshift/fx-convert/blob/main/README.md" target="_blank" rel="noopener noreferrer">Catnip, Disclaimer &amp; Privacy Policy</a></p>
 </footer>
 <script>
@@ -1277,7 +1277,7 @@ function refreshRates(force){
   if (cached){
     applyRates(cached.rates, cached.base, cached.label, new Date(cached.fetched));
     if (!force && Date.now() < cached.freshUntil){
-      setStatus('Cached rates \u00b7 fetched ' + hhmm(new Date(cached.fetched)), 'live');
+      setStatus('Freshly cached rates', 'live');
       return;
     }
   }
