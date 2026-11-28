@@ -39,6 +39,9 @@
   --live:#43d98a;
   --warn:#f8c64b;
   --bad:#ff5f66;
+  --live-glow:rgba(67,217,138,.7);
+  --warn-glow:rgba(248,198,75,.7);
+  --bad-glow:rgba(255,95,102,.7);
 }
 *{margin:0;padding:0;box-sizing:border-box}
 ::selection{background:#3ee6c8;color:#081410}
@@ -269,9 +272,9 @@ footer{
   width:9px;height:9px;border-radius:50%;display:inline-block;
   background:#57756c;vertical-align:middle;flex:0 0 auto;
 }
-.dot.live{background:var(--live);box-shadow:0 0 6px rgba(67,217,138,.7)}
-.dot.warn{background:var(--warn);box-shadow:0 0 6px rgba(248,198,75,.7)}
-.dot.bad{background:var(--bad);box-shadow:0 0 6px rgba(255,95,102,.7)}
+.dot.live{background:var(--live);box-shadow:0 0 6px var(--live-glow)}
+.dot.warn{background:var(--warn);box-shadow:0 0 6px var(--warn-glow)}
+.dot.bad{background:var(--bad);box-shadow:0 0 6px var(--bad-glow)}
 .dot.busy{background:#57756c}
 .ver{font-size:12px;color:var(--rose-light);letter-spacing:.12em;margin-left:7px}
 .orbiter{
@@ -416,7 +419,7 @@ footer{
   </svg>
   <p class="priv"><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer" style="color:var(--rose-light);text-decoration:none">Rates By Exchange Rate API</a></p>
   <p class="maint">Estimates only — use at your own risk</p>
-  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.56</span></p>
+  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.57</span></p>
   <p class="priv"><a href="https://github.com/cknightshift/fx-convert/blob/main/README.md" target="_blank" rel="noopener noreferrer">Catnip, Disclaimer &amp; Privacy Policy</a></p>
 </footer>
 <script>
@@ -487,8 +490,9 @@ function loadCache(){
     if (!o || typeof o.base !== 'string') return null;
     if (!o.rates || typeof o.rates !== 'object') return null;
     if (typeof o.freshUntil !== 'number') return null;
-    if (Date.now() > o.freshUntil + STALE_MAX_MS) return null;
-    if (typeof o.eol === 'number' && o.eol > 0 && Date.now() / 1000 > o.eol) return null;
+    const now = Date.now();
+    if (now > o.freshUntil + STALE_MAX_MS) return null;
+    if (typeof o.eol === 'number' && o.eol > 0 && now / 1000 > o.eol) return null;
     return o;
   } catch(e){ return null; }
 }
@@ -637,30 +641,12 @@ function buildCard(pair, opts){
     '<div class="lbl lbl-out" style="margin-top:14px"></div>' +
     '<div class="out" aria-live="polite"></div>';
 
-  if (isCustom){
-    el.innerHTML =
-      '<div class="pair from"></div>' +
-      '<button class="swap" type="button" aria-label="Reverse direction">\u21c4</button>' +
-      '<div class="pair to"></div>' +
-      '<div class="io">' +
-        '<div class="lbl lbl-in">Amount in <span class="x-display"></span></div>' +
-        '<div class="inrow">' +
-          '<input class="amt" type="text" inputmode="decimal" autocomplete="off" spellcheck="false" maxlength="320" placeholder="0" aria-label="Amount">' +
-          '<button class="calc-btn" type="button" aria-label="Calculator">' + CARD_SVG_CALC + '</button>' +
-        '</div>' +
-        '<div class="calc-msg" role="status" hidden></div>' +
-        '<div class="lbl lbl-out" style="margin-top:14px">Converted to <span class="y-display"></span></div>' +
-        '<div class="out" aria-live="polite"></div>' +
-      '</div>' +
-      '<div class="pop-slot"></div>';
-  } else {
-    el.innerHTML =
-      '<div class="pair from"><span class="code"></span><span class="name"></span></div>' +
-      '<button class="swap" type="button" aria-label="Reverse direction">\u21c4</button>' +
-      '<div class="pair to"><span class="code"></span><span class="name"></span></div>' +
-      '<div class="io">' + ioMarkup + '</div>' +
-      '<div class="pop-slot"></div>';
-  }
+  el.innerHTML =
+    '<div class="pair from"></div>' +
+    '<button class="swap" type="button" aria-label="Reverse direction">\u21c4</button>' +
+    '<div class="pair to"></div>' +
+    '<div class="io">' + ioMarkup + '</div>' +
+    '<div class="pop-slot"></div>';
 
   const card = {
     el,
@@ -671,12 +657,12 @@ function buildCard(pair, opts){
     timer: null,
     fromCcy, toCcy,
     commitCcy: null,
-    xDisplay: isCustom ? el.querySelector('.x-display') : null,
-    yDisplay: isCustom ? el.querySelector('.y-display') : null,
-    fromCode: isCustom ? null : el.querySelector('.pair.from .code'),
-    fromName: isCustom ? null : el.querySelector('.pair.from .name'),
-    toCode:   isCustom ? null : el.querySelector('.pair.to .code'),
-    toName:   isCustom ? null : el.querySelector('.pair.to .name'),
+    xDisplay: el.querySelector('.x-display'),
+    yDisplay: el.querySelector('.y-display'),
+    fromCode: el.querySelector('.pair.from .code'),
+    fromName: el.querySelector('.pair.from .name'),
+    toCode:   el.querySelector('.pair.to .code'),
+    toName:   el.querySelector('.pair.to .name'),
     lblIn:    el.querySelector('.lbl-in'),
     lblOut:   el.querySelector('.lbl-out'),
     amt:      el.querySelector('.amt'),
@@ -687,6 +673,14 @@ function buildCard(pair, opts){
   };
 
   if (isCustom){
+    card.xDisplay = document.createElement('span');
+    card.xDisplay.className = 'x-display';
+    card.yDisplay = document.createElement('span');
+    card.yDisplay.className = 'y-display';
+    card.lblIn.textContent = 'Amount in ';
+    card.lblIn.appendChild(card.xDisplay);
+    card.lblOut.textContent = 'Converted to ';
+    card.lblOut.appendChild(card.yDisplay);
     card.fromCtl = buildCcyControl(card, 'from');
     card.toCtl = buildCcyControl(card, 'to');
     el.querySelector('.pair.from').appendChild(card.fromCtl.btn);
@@ -695,6 +689,17 @@ function buildCard(pair, opts){
     el.querySelector('.pair.to').appendChild(card.toCtl.menu);
     fillCcyControl(card.fromCtl, CUSTOM_CURRENCIES, fromCcy);
     fillCcyControl(card.toCtl, CUSTOM_CURRENCIES, toCcy);
+  } else {
+    card.fromCode = document.createElement('span');
+    card.fromCode.className = 'code';
+    card.fromName = document.createElement('span');
+    card.fromName.className = 'name';
+    card.toCode = document.createElement('span');
+    card.toCode.className = 'code';
+    card.toName = document.createElement('span');
+    card.toName.className = 'name';
+    el.querySelector('.pair.from').append(card.fromCode, card.fromName);
+    el.querySelector('.pair.to').append(card.toCode, card.toName);
   }
 
   el.querySelector('.swap').addEventListener('click', () => {
@@ -908,7 +913,7 @@ document.addEventListener('keydown', e => {
 
 let cardW = 300;
 const CARD_GAP = 26;
-function measure(){ cardW = cards.length ? cards[0].el.offsetWidth : 300; }
+function measure(){ if (cards.length) cardW = cards[0].el.offsetWidth; }
 
 function layout(){
   const w = stage.clientWidth;
@@ -937,15 +942,16 @@ function layout(){
   }
 }
 
-function go(step){
+function jumpTo(rel){
   closePop();
   closeAllMenus();
   const n = cards.length;
-  index = ((index + step) % n + n) % n;
+  index = ((index + rel) % n + n) % n;
   layout();
   const active = cards[index];
   if (!COARSE && active && active.amt) active.amt.focus({preventScroll:true});
 }
+function go(step){ jumpTo(step); }
 
 document.getElementById('prevBtn').addEventListener('click', () => { go(-1); });
 document.getElementById('nextBtn').addEventListener('click', () => { go(1); });
@@ -962,12 +968,7 @@ stage.addEventListener('click', e => {
   const target = cards[((index + rel) % n + n) % n];
   const r = target.el.getBoundingClientRect();
   if (e.clientY < r.top || e.clientY > r.bottom) return;
-  closePop();
-  closeAllMenus();
-  index = ((index + rel) % n + n) % n;
-  layout();
-  const picked = cards[index];
-  if (!COARSE && picked && picked.amt) picked.amt.focus({preventScroll:true});
+  jumpTo(rel);
 });
 
 stage.addEventListener('keydown', e => {
@@ -983,15 +984,17 @@ function applyRM(){
 }
 if (reducedMotion && reducedMotion.addEventListener) reducedMotion.addEventListener('change', applyRM);
 
+function armStage(){
+  requestAnimationFrame(() => requestAnimationFrame(() => stage.classList.add('armed')));
+}
+
 let resizeTimer = null;
 window.addEventListener('resize', () => {
   stage.classList.remove('armed');
   measure();
   layout();
   if (resizeTimer) clearTimeout(resizeTimer);
-  resizeTimer = setTimeout(() => {
-    requestAnimationFrame(() => requestAnimationFrame(() => stage.classList.add('armed')));
-  }, 120);
+  resizeTimer = setTimeout(armStage, 120);
 });
 
 function fetchJSON(url, timeoutMs){
@@ -1347,7 +1350,7 @@ PAIRS.forEach(p => {
 applyRM();
 measure();
 layout();
-requestAnimationFrame(() => requestAnimationFrame(() => stage.classList.add('armed')));
+armStage();
 
 refreshRates();
 
