@@ -363,7 +363,7 @@ footer{
   <button id="updbtn" class="btn" type="button">Update Rates</button>
   <div class="status" id="statusWrap" role="status">
     <span class="dot busy" id="statusDot" aria-hidden="true"></span>
-    <span id="statusText">Waking up the rates desk&hellip;</span>
+    <span id="statusText">Opening the rates tap</span>
   </div>
 </div>
 <main class="stage" id="stage" aria-label="Currency pair carousel" tabindex="0">
@@ -413,7 +413,7 @@ footer{
   </svg>
   <p class="priv"><a href="https://www.exchangerate-api.com" target="_blank" rel="noopener noreferrer" style="color:var(--rose-light);text-decoration:none">Rates By Exchange Rate API</a></p>
   <p class="maint">Estimates only — use at your own risk</p>
-  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.54</span></p>
+  <p class="sig">Made with Proton's Clever Cat (Lumo AI) by <span style="font-size:15.5px;color:var(--rose-light)">cknightshift</span><span class="ver">v10.55</span></p>
   <p class="priv"><a href="https://github.com/cknightshift/fx-convert/blob/main/README.md" target="_blank" rel="noopener noreferrer">Catnip, Disclaimer &amp; Privacy Policy</a></p>
 </footer>
 <script>
@@ -470,11 +470,10 @@ let busy = false;
 let index = 0;
 const cards = [];
 
-function saveCache(rates, base, label, fetched, freshUntil, eol){
+function saveCache(rates, base, freshUntil, eol){
   try {
     window.localStorage.setItem(CACHE_KEY, JSON.stringify({
-      rates: rates, base: base, label: label,
-      fetched: fetched, freshUntil: freshUntil, eol: eol
+      rates: rates, base: base, freshUntil: freshUntil, eol: eol
     }));
   } catch(e){}
 }
@@ -482,9 +481,9 @@ function saveCache(rates, base, label, fetched, freshUntil, eol){
 function loadCache(){
   try {
     const o = JSON.parse(window.localStorage.getItem(CACHE_KEY) || 'null');
-    if (!o || typeof o.base !== 'string' || typeof o.label !== 'string') return null;
+    if (!o || typeof o.base !== 'string') return null;
     if (!o.rates || typeof o.rates !== 'object') return null;
-    if (typeof o.fetched !== 'number' || typeof o.freshUntil !== 'number') return null;
+    if (typeof o.freshUntil !== 'number') return null;
     if (Date.now() > o.freshUntil + STALE_MAX_MS) return null;
     if (typeof o.eol === 'number' && o.eol > 0 && Date.now() / 1000 > o.eol) return null;
     return o;
@@ -600,10 +599,6 @@ function fmtMoney(v){
     s = v.toLocaleString('en-NZ', {maximumSignificantDigits: 3});
   }
   return s;
-}
-function hhmm(d){
-  const p = n => (n < 10 ? '0' : '') + n;
-  return p(d.getHours()) + ':' + p(d.getMinutes());
 }
 
 const CARD_SVG_CALC =
@@ -791,7 +786,7 @@ function updateOutput(card){
     if (state == null){
       clearOut(card);
     } else {
-      card.out.textContent = 'Rate unavailable';
+      card.out.textContent = 'Rate is goneburger';
       card.out.classList.add('na');
     }
     return ev;
@@ -1049,8 +1044,8 @@ function computeCrossRate(rates, base, from, to){
   return rate;
 }
 
-function applyRates(rates, base, label, when){
-  state = {base, rates, label};
+function applyRates(rates, base){
+  state = {base, rates};
   refreshCustomMenu(rates, base);
   cards.forEach(card => {
     card.rate = card.custom
@@ -1058,7 +1053,7 @@ function applyRates(rates, base, label, when){
       : computeCrossRate(rates, base, card.other, NZD);
     updateOutput(card);
   });
-  setStatus('Live rates via ' + label + ' \u00b7 ' + hhmm(when), 'live');
+  setStatus('Fresh rates active', 'live');
 }
 
 let openMenuCtl = null;
@@ -1258,15 +1253,15 @@ function recomputeCustom(card){
 function failAll(reason){
   const cached = loadCache();
   if (cached){
-    applyRates(cached.rates, cached.base, cached.label, new Date(cached.fetched));
-    setStatus('Rates unavailable \u2014 cached rates from ' + hhmm(new Date(cached.fetched)) + ' \u00b7 tap Update Rates to retry', 'bad');
+    applyRates(cached.rates, cached.base);
+    setStatus('Live rates are goneburger \u2014 cached rates are active', 'bad');
   } else {
     state = null;
     cards.forEach(card => {
       card.rate = null;
       updateOutput(card);
     });
-    setStatus('Rates unavailable \u2014 tap Update Rates to retry', 'bad');
+    setStatus('Live and cached rates are goneburger \u00b7 tap Update Rates to retry', 'bad');
   }
   console.warn('[FX Convert] Both rate sources failed. ' + reason);
 }
@@ -1275,16 +1270,16 @@ function refreshRates(force){
   if (busy) return;
   const cached = loadCache();
   if (cached){
-    applyRates(cached.rates, cached.base, cached.label, new Date(cached.fetched));
+    applyRates(cached.rates, cached.base);
     if (!force && Date.now() < cached.freshUntil){
-      setStatus('Freshly cached rates', 'live');
+      setStatus('Fresh cached rates active', 'live');
       return;
     }
   }
   busy = true;
   updBtn.disabled = true;
   updBtn.textContent = 'Updating\u2026';
-  setStatus('Fetching live rates\u2026', 'busy');
+  setStatus('Fetching fresh rates', 'busy');
 
   fetchJSON(PRIMARY_URL, PRIMARY_MS)
     .then(j => {
@@ -1295,9 +1290,9 @@ function refreshRates(force){
       const freshUntil = (typeof j.time_next_update_unix === 'number' && j.time_next_update_unix > Date.now() / 1000)
         ? j.time_next_update_unix * 1000
         : Date.now() + 24 * 60 * 60 * 1000;
-      saveCache(j.rates, j.base_code, 'open.er-api.com', Date.now(), freshUntil,
+      saveCache(j.rates, j.base_code, freshUntil,
         (typeof j.time_eol_unix === 'number') ? j.time_eol_unix : 0);
-      return {rates: j.rates, base: j.base_code, label: 'open.er-api.com'};
+      return {rates: j.rates, base: j.base_code};
     })
     .catch(err => {
       console.warn('[FX Convert] Primary source (open.er-api.com) failed: ' + err.message);
@@ -1318,11 +1313,11 @@ function refreshRates(force){
           else skipped++;
         });
         if (skipped > 0) console.warn('[FX Convert] Frankfurter v2 skipped ' + skipped + ' malformed rate row(s).');
-        saveCache(rates, rowsBase, 'frankfurter.dev', Date.now(), Date.now() + 24 * 60 * 60 * 1000, 0);
-        return {rates: rates, base: rowsBase, label: 'frankfurter.dev'};
+        saveCache(rates, rowsBase, Date.now() + 24 * 60 * 60 * 1000, 0);
+        return {rates: rates, base: rowsBase};
       });
     })
-    .then(win => applyRates(win.rates, win.base, win.label, new Date()))
+    .then(win => applyRates(win.rates, win.base))
     .catch(err => failAll(err.message))
     .then(() => {
       busy = false;
