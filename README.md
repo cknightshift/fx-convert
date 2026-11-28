@@ -2,7 +2,7 @@
 ## The Fussy Currency Converter
 
 *Read Me, Disclaimer & Privacy Policy*  
-Last updated: 5 November 2026
+Last updated: 28 November 2026
 
 https://convert.fussycat.app/
 
@@ -47,13 +47,15 @@ This is a hobby project, intended for this cat's personal use only — a toy mou
 
 ### What Actually Happens
 
-The web app downloads current rates when the page loads, and again whenever you tap 'Update Rates'.
+The web app downloads current rates when the page loads — unless it already holds a fresh copy, in which case it doesn't bother — and again whenever you tap 'Update Rates'.
 
 FX Convert does not:
 - Save or remember your numbers
 - Use cookies or analytics
 
 FX Convert itself doesn't track you. It doesn't store you. It doesn't know you. Then again, it's a cat — it was never really paying attention to you anyway.
+
+A small copy of the latest rates is kept in your browser's local storage, so they don't need to be downloaded again on return visits.
 
 Everything you type lives only in your browser's memory. Close the tab and it's gone, just like a cat the moment you want it on your lap.
 
